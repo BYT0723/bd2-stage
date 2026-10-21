@@ -48,6 +48,9 @@ check("间隔免键盘+带单位", "TIMER_STEPS" in s and "secsLabel" in s)
 check("间隔档位5m/15m/1h", "TIMER_STEPS = [300, 900, 3600]" in s)
 check("Logo渲染已移除", ".wp-logo{display:none!important}" in s)
 check("Logo配置分组已移除", ".wc-foldrow{display:none!important}" in s)
+check("页码按列表真实顺序", "listIds" in s and "st.characters" in s and "filteredIds" not in s)
+check("页码多语言解析", "pageNums" in s and r"(\d+)\D+(\d+)" in s)
+check("随机后定位到所在页", "syncListTo" in s and "scrollIntoView" in s)
 _live_props = json.loads((LIVE / "project.json").read_text())["general"]["properties"]
 check("project.json无logoScale", "logoScale" not in _live_props)
 

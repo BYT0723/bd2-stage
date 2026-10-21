@@ -53,6 +53,11 @@ def test_inject_script():
     assert "secsLabel" in s, "间隔必须带单位"
     assert ".wp-logo{display:none!important}" in s, "Logo 渲染必须被移除"
     assert ".wc-foldrow{display:none!important}" in s, "Logo 配置分组必须被移除"
+    assert "listIds" in s and "st.characters" in s, "页码必须按列表真实顺序（store.characters）算，不能用 DB.order"
+    assert "filteredIds" not in s, "旧的有序表算页逻辑必须删除"
+    assert "pageNums" in s and r"(\d+)\D+(\d+)" in s, "页码解析必须兼容 第a/b页 · a/b ページ · Page a of b"
+    assert "syncListTo" in s, "随机后必须定位到该角色所在页"
+    assert "scrollIntoView" in s, "跳页后列表必须滚进可视区"
 
 def test_logo_removed():
     import json

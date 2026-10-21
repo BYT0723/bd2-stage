@@ -157,7 +157,7 @@
     // 兜底：按行位置映射（文本改名/截断时仍可用）
     var row = pageButtons().indexOf(btn);
     if (row < 0) return null;
-    var ids = filteredIds();
+    var ids = listIds();
     return ids[(curPage() - 1) * PAGE + row] || null;
   }
   function activeElem() {
@@ -165,28 +165,32 @@
     var i = btns.findIndex(function (b) { return b.classList.contains('wc-elem--active'); });
     return i < 0 ? null : ELEMS[i] || null;
   }
-  function filteredIds() {
+  /* 列表真实顺序＝store.characters（DB.order 与之不同：NPC 在最前） */
+  function listIds() {
     if (!DB) return [];
+    var ids = null;
+    var st = piniaCharStore();
+    if (st && st.characters && st.characters.length) {
+      ids = st.characters.map(function (c) { return c.id; });
+    }
+    if (!ids || !ids.length) ids = DB.order.slice();
     var el = activeElem();
-    return DB.order.filter(function (id) { return !el || DB.elem[id] === el; });
+    return el ? ids.filter(function (id) { return DB.elem[id] === el; }) : ids;
   }
   function favIds() {
     if (!DB) return [];
     return DB.order.filter(function (id) { return favs.has(id); });
   }
-  function candidates() { return favOnly ? favIds() : filteredIds(); }
-  function totalPages() {
+  function candidates() { return favOnly ? favIds() : listIds(); }
+  /* 页码文案随语言变（第 a/b 页 · a/b ページ · Page a of b），按两个数字取 */
+  function pageNums() {
     var el = document.querySelector(SEL.page);
-    if (!el) return 1;
-    var m = /\/\s*(\d+)/.exec(el.textContent || '');
-    return m ? Math.max(1, parseInt(m[1], 10)) : 1;
+    var m = el && /(\d+)\D+(\d+)/.exec(el.textContent || '');
+    return m ? { cur: Math.max(1, parseInt(m[1], 10)), total: Math.max(1, parseInt(m[2], 10)) }
+             : { cur: 1, total: 1 };
   }
-  function curPage() {
-    var el = document.querySelector(SEL.page);
-    if (!el) return 1;
-    var m = /(\d+)\s*\/\s*(\d+)/.exec(el.textContent || '');
-    return m ? Math.max(1, parseInt(m[1], 10)) : 1;
-  }
+  function totalPages() { return pageNums().total; }
+  function curPage() { return pageNums().cur; }
   function pageButtons() { return Array.prototype.slice.call(document.querySelectorAll(SEL.item)); }
   function curChar() {
     var m = /[?&]char=([^&]*)/.exec(location.search || '');
@@ -285,7 +289,7 @@
         act.click();
         await waitUntil(function () { return !document.querySelector('.wc-elem:not(.bd2-fav).wc-elem--active'); }, 400);
       }
-      var idx = DB.order.indexOf(id);
+      var idx = listIds().indexOf(id);
       if (idx < 0) return false;
       await gotoPage(Math.floor(idx / PAGE) + 1);
       var want = displayOf(id);
@@ -308,6 +312,42 @@
       lastFavKey = '';
       schedule();
     }
+  }
+  /* 随机后把列表翻到该角色所在页，方便直接点❤（不改选中，只翻页） */
+  async function syncListTo(id) {
+    try {
+      if (favOnly) {
+        var fi = favIds().indexOf(id);
+        if (fi < 0) return false;
+        favPage = Math.floor(fi / PAGE) + 1;
+        lastFavKey = '';
+        renderFavList();
+        return true;
+      }
+      if (!panelVisible() || !document.querySelector(SEL.list)) return false;
+      var list = document.querySelector(SEL.list);
+      if (list.style.display === 'none') return false;
+      if (!pageHas(id)) {
+        var idx = listIds().indexOf(id);       // 保留当前属性过滤，按列表真实顺序算页
+        if (idx >= 0) {
+          var target = Math.floor(idx / PAGE) + 1;
+          if (curPage() !== target) await gotoPage(target);
+        }
+        // 兜底：顺序/过滤与本地判断不一致时逐页找（最多一圈）
+        for (var g = 0; g < totalPages() && !pageHas(id); g++) {
+          var before = curPage();
+          var nav = navBtns();
+          if (nav.length < 2) return false;
+          nav[1].click();
+          if (!(await waitUntil(function () { return curPage() !== before; }, 1500))) return false;
+        }
+      }
+      if (!pageHas(id)) return false;
+      paintHearts();
+      if (list.scrollIntoView) list.scrollIntoView({ block: 'nearest' });
+      schedule();
+      return true;
+    } catch (e) { return false; }
   }
   /* 原列表条目右侧心形 */
   function paintHearts() {
@@ -597,7 +637,13 @@
     var id = nextPick(ids);
     if (ids.length > 1 && id === curChar()) id = nextPick(ids);   // 尽量别选中当前这个
     var ok = await setCharacter(id);
-    toast(ok ? '随机：' + (displayOf(id) || id) : '定位失败（第 ' + curPage() + '/' + totalPages() + ' 页）');
+    var jumped = await syncListTo(id);   // 跳到该角色所在页，方便直接点❤
+    var pageNow = favOnly ? favPage : curPage();
+    var pageTotal = favOnly ? Math.max(1, Math.ceil(favIds().length / PAGE)) : totalPages();
+    if (window.__bd2fav) window.__bd2fav.lastJump = { id: id, page: pageNow, jumped: jumped };
+    var name = displayOf(id) || id;
+    var where = '（第 ' + pageNow + '/' + pageTotal + ' 页）';
+    toast(ok ? '随机：' + name + (jumped ? where : '') : '定位失败' + where);
   }
   async function clearElemFilter() {
     var act = document.querySelector('.wc-elem:not(.bd2-fav).wc-elem--active');
@@ -632,7 +678,9 @@
       return;
     }
     window.__bd2fav = {
-      version: 34,
+      version: 35,
+      build: 'jump-2',
+      lastJump: null,
       favCount: function () { return favs.size; },
       timer: function () { return { on: timerOn, secs: timerSecs }; }
     };
