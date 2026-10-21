@@ -16,6 +16,7 @@ CASES = [
     fav.test_dist_matches_live,
     full.test_manifest_complete,
     full.test_bundle_patched,
+    full.test_audio_patch_fingerprint,
 ]
 
 def main():
