@@ -1,63 +1,67 @@
 # bd2-stage · BD2 立绘舞台
 
-Brown Dust 2 的 Live2D 壁纸：素材全本地 + 收藏 / 随机 / 定时轮播。
+Brown Dust 2 Live2D 壁纸：234 个角色全本地加载，支持收藏 / 随机 / 定时轮播。
 
-这个目录**既是壁纸包，也是本项目的 git 仓库**：xwallpaper 直接加载它，
-`make` 在这里改代码、同步素材、验证状态。
+> EN: A Brown Dust 2 Live2D wallpaper with 234 local characters, favorites, shuffle and timer autoplay. Viewer core by [Jelosus2/BD2-L2D-Viewer](https://github.com/Jelosus2/BD2-L2D-Viewer).
 
-```
-index.html                  由 templates/index.html 生成，?v= 为内容哈希
-project.json                壁纸属性（已移除 logoScale）
-assets/                     素材 517MB（绝大多数被 gitignore）
-  spines/ audios/           234 角色 / 1956 文件，可由 make sync 拉回
-  index-Dsqno3tX.js         上游 bundle，被 make patch 打两处补丁
-  bd2-data.js               角色表（gen_characters.py 生成，stamp.py 安装）
-  bd2-fav-random.js         收藏 / 随机 / 定时随机外挂
-custom/                     外挂源码（唯一手改的运行时文件）
-templates/                  index.html 与 project.json 模板
-tools/                      同步、补丁、校验、冒烟
-tests/                      测试
-tasks/                      manifest.json（期望 hash）、bundle 原始底稿、角色顺序
-```
+<!-- 预览图：本地 preview.gif 是 Steam 资源（不入库），公开展示时请自行截图放到 docs/ 下并在此引用 -->
 
-## 命令
+## 功能
 
-```
-make sync      # 上游素材同步到 assets/（HEAD 比对；--refresh 强制）+ 生成角色表
-make patch     # bundle 打补丁（幂等）+ 刷新 index.html 版本号
-make verify    # 校验 manifest hash / 补丁 / 版本号
-make check     # 静态检查 + 测试
-make smoke     # 无头 Chromium 冒烟（抓未捕获异常、确认 UI 挂载）
-make all       # 全流程
+- 234 角色，点击人物会做动作、说语音（中 / 日 / 英三语）
+- 按火 / 水 / 风 / 光 / 暗属性筛选
+- ❤ 收藏：列表项右侧点心只收藏不切换；属性行末图标进独立收藏列表（自带分页）
+- 🎲 随机：洗牌袋保证一轮内不重复，随机后自动跳到该角色所在页
+- ⏱ 定时：5 分 / 15 分 / 1 小时三档，面板打开时暂停，关闭后继续
+- 悬浮球选人 + 右键属性调位置 / 缩放 / 背景 / 音量 / 主题色
+- 语音按需加载 + 3 路复用，不再换人堆积 Audio 元素
+
+## 用法
+
+### 直接预览
+
+```sh
+python3 -m http.server
+# 打开 http://localhost:8000
 ```
 
-## bundle 补丁（字符串级，指纹不符会中止）
+### Wallpaper Engine（Windows）
 
-| 原文                               | 改为       | 目的                                     |
-| ---------------------------------- | ---------- | ---------------------------------------- |
-| `function T_(e){return w_.has(e)}` | `return!0` | 全部角色按本地素材处理（缺失仍回退在线） |
-| `logoVisible:!0`                   | `!1`       | Logo 默认关闭                            |
-| `Vn()` 里 `new Audio` + `preload=auto` | 固定 3 个语音元素 + `preload=none` | 换人不再堆积 Audio / 预加载，点击才加载 |
+把本目录作为壁纸包导入即可，`project.json` 已配好属性面板。
 
-## 外挂功能
+### xwallpaper（Linux）
 
-- 角色条目右侧心形：收藏（只收藏，不切换角色），存 `localStorage`。
-- 属性行末尾的收藏图标：进入独立收藏列表（自带分页，只有收藏项）。
-- `🎲`：从当前候选集随机；洗牌袋保证一轮内不重复。
-- `⏱`：定时随机，档位 5 分 / 15 分 / 1 小时；面板打开时暂停并显示“面板关闭后计时”。
-  换人直接写 Pinia `characterStore`，所以面板关闭也能换；取不到 store 才回退点列表。
+```sh
+xwallpaper --output all /path/to/bd2-stage/index.html
+```
 
-## 已知限制
+> xwallpaper 会摘除页面键盘事件，间隔用点击循环档位代替输入框。
 
-- xwallpaper 会摘除页面键盘事件（`src/web.c` `web_drop_key_mask`），面板内的输入框
-  无法键入；因此间隔控件是点击循环，而不是输入框。
-- 素材不入库：`git clone` 后需 `make sync` 才能恢复 517MB 素材（或直接从 Steam 重下）。
+## 素材说明
 
-## 素材与仓库的边界
+素材不入库，`git clone` 后恢复：
 
-| 入库                                                                                  | 不入库（可重建）                                                                               |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `custom/`、`templates/`、`tools/`、`tests/`、`Makefile`、`index.html`、`project.json` | `assets/spines/`、`assets/audios/`、`assets/index-*.js/.css`、`assets/bd2-*.js`、`preview.gif` |
+```sh
+make sync    # 同步上游素材到 assets/（约 517MB）+ 生成角色表
+make patch   # bundle 打补丁 + 刷新版本号
+make verify  # 校验 manifest / 补丁 / 版本号
+```
 
-`tasks/manifest.json` 入库：它记录每个素材的 sha256，`make verify` 据此判断
-“本地是否仍与上游一致”。
+| 入库 | 不入库（可重建） |
+| ---- | ---------------- |
+| `custom/` `templates/` `tools/` `tests/` `Makefile` `index.html` `project.json` | `assets/spines/` `assets/audios/` `assets/index-*.js/.css` `assets/bd2-*.js` `preview.gif` `favicon.ico` |
+
+## 开发
+
+```sh
+make check   # 静态检查 + 测试
+make smoke   # 无头 Chromium 冒烟
+make all     # sync -> patch -> verify -> check -> smoke
+```
+
+bundle 补丁是字符串级（指纹不符中止）：全角色按本地素材处理、Logo 默认关闭、语音元素池化。
+
+## 版权
+
+- 角色立绘 / 语音版权归 NEOWIZ / GAMFS 所有，本仓库不含游戏资源
+- 网页 Viewer 部分 © Jelosus2（开源），壁纸外挂与工程部分由本仓库作者维护
