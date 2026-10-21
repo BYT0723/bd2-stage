@@ -4,7 +4,7 @@ Brown Dust 2 Live2D 壁纸：234 个角色全本地加载，支持收藏 / 随�
 
 > EN: A Brown Dust 2 Live2D wallpaper with 234 local characters, favorites, shuffle and timer autoplay. Viewer core by [Jelosus2/BD2-L2D-Viewer](https://github.com/Jelosus2/BD2-L2D-Viewer).
 
-<!-- 预览图：本地 preview.gif 是 Steam 资源（不入库），公开展示时请自行截图放到 docs/ 下并在此引用 -->
+![preview](preview.png)
 
 ## 功能
 
@@ -65,3 +65,4 @@ bundle 补丁是字符串级（指纹不符中止）：全角色按本地素材�
 
 - 角色立绘 / 语音版权归 NEOWIZ / GAMFS 所有，本仓库不含游戏资源
 - 网页 Viewer 部分 © Jelosus2（开源），壁纸外挂与工程部分由本仓库作者维护
+- 本仓库自有代码采用 MIT License（见 `LICENSE`）
