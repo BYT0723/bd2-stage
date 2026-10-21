@@ -38,6 +38,9 @@ def main():
     js = (ASSETS / "index-Dsqno3tX.js").read_text()
     assert "function T_(e){return!0}" in js, "bundle 缺少本地素材补丁（make patch）"
     assert "logoVisible:!1" in js, "bundle 缺少 Logo 关闭补丁（make patch）"
+    assert "bd2AudioPool" in js, "bundle 缺少语音池补丁（make patch）"
+    assert "t.preload=`none`" in js, "bundle 语音仍会预加载（make patch）"
+    assert "t.onerror=()=>" in js, "bundle 复用语音元素时监听器会叠加（make patch）"
     r = subprocess.run(["node", "--check", str(ASSETS / "index-Dsqno3tX.js")],
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
