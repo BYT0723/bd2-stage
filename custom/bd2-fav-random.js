@@ -54,22 +54,22 @@
       '.bd2-heart:hover{opacity:1}',
       '.bd2-heart svg{width:15px;height:15px;display:block;fill:none;stroke:currentColor;stroke-width:2}',
       '.bd2-heart.on{opacity:1;color:#f43f5e}',
-      '.bd2-heart.on svg{fill:currentColor}',
+      '.bd2-heart.on svg{fill:#f43f5e;stroke:#9f1239}',
       '.wc-list__item>.wc-list__name{flex:1 1 auto;min-width:0}',
       '.bd2-fav{flex:1 1 0;min-width:0;aspect-ratio:1/1;padding:6px;cursor:pointer;',
       'display:flex;align-items:center;justify-content:center;',
       'background:#1c1710cc;border:1px solid #d9b26a61;border-radius:34%;color:#e6dcc4}',
-      '.bd2-fav:hover{background:#7f7f7f29}',
+      '.bd2-fav:hover{background:#3c301e}',
       '.bd2-fav.wc-elem--active,.bd2-fav.on{background:#d9b26a;border:2px solid #d9b26a;',
       'color:#1c1710;padding:5px}',
       '.bd2-fav svg{width:19px;height:19px;display:block;fill:none;stroke:currentColor;stroke-width:2}',
-      '.bd2-fav.wc-elem--active svg,.bd2-fav.on svg{fill:currentColor}',
+      '.bd2-fav.wc-elem--active svg,.bd2-fav.on svg{fill:#f43f5e;stroke:#9f1239}',
       '.bd2-fav.wc-elem{font-size:17px;line-height:1;color:inherit;cursor:pointer}',
       '.bd2-tools{display:flex;align-items:center;gap:6px;margin:0 0 8px}',
       '.bd2-tools .bd2-random{flex:0 0 auto;width:44px;cursor:pointer;',
       'border:1px solid #d9b26a66;border-radius:999px;background:#1c1710bf;',
       'color:#f2ead8;padding:8px 0;font-size:15px;line-height:1;white-space:nowrap}',
-      '.bd2-tools .bd2-random:hover{background:#d9b26a29}',
+      '.bd2-tools .bd2-random:hover{background:#3c301e}',
       '.bd2-favlist{background:#1c171099;border:1px solid #d9b26a4d;border-radius:18px;color:#f2ead8;',
       'display:flex;flex-direction:column;gap:4px;margin-bottom:6px;padding:6px}',
       '.bd2-fitem{display:flex;align-items:center;gap:7px;width:100%;cursor:pointer;',
@@ -81,8 +81,13 @@
       '.bd2-fnav{display:flex;align-items:center;gap:6px;margin-bottom:6px}',
       '.bd2-fnav span{opacity:.75;font-size:11px;flex:none}',
       '.bd2-fnav button{cursor:pointer;flex:none;width:30px;height:30px;color:#f2ead8;',
-      'background:#1c1710eb;border:1px solid #d9b26ae6;border-radius:50%;font-size:12px;line-height:1}',
+      'display:flex;align-items:center;justify-content:center;',
+      'background:#1c1710eb;border:1px solid #d9b26ae6;border-radius:50%;padding:0}',
       '.bd2-fnav button:hover{background:#3c301ef2}',
+      '.bd2-fnav button:active{background:#d9b26a47}',
+      '.bd2-tri{pointer-events:none;border-style:solid;width:0;height:0;display:block}',
+      '.bd2-tri--left{border-width:6px 9px 6px 0;border-color:transparent #f2ead8 transparent transparent}',
+      '.bd2-tri--right{border-width:6px 0 6px 9px;border-color:transparent transparent transparent #f2ead8}',
       '.bd2-empty{opacity:.7;font-size:12px;text-align:center;padding:8px 0}',
       '.wc-foldrow{display:none!important}',
       '.wp-logo{display:none!important}',
@@ -90,10 +95,12 @@
       'border:1px solid #d9b26a66;border-radius:999px;background:#1c1710bf;color:#f2ead8;',
       'padding:8px 6px;font-size:13px;white-space:nowrap}',
       '.bd2-tools .bd2-timer-toggle.on{border-color:#d9b26a;color:#1c1710;background:#d9b26a;font-weight:700}',
+      '.bd2-tools .bd2-timer-toggle:hover{background:#3c301e}',
+      '.bd2-tools .bd2-timer-toggle.on:hover{background:#d9b26a}',
       '.bd2-tools .bd2-timer-secs{flex:0 0 auto;cursor:pointer;white-space:nowrap;',
       'color:#f2ead8;background:#1c1710bf;border:1px solid #d9b26a80;border-radius:999px;',
       'padding:8px 10px;font-size:12px}',
-      '.bd2-tools .bd2-timer-secs:hover{background:#d9b26a29}',
+      '.bd2-tools .bd2-timer-secs:hover{background:#3c301e}',
       '.bd2-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:3000;',
       'background:#1c1710f2;color:#f6e3b4;border:1px solid #d9b26a;padding:8px 16px;',
       'border-radius:999px;font-size:13px;pointer-events:none}'
@@ -357,7 +364,7 @@
       if (!id) { if (h) h.remove(); return; }
       if (!h) {
         h = document.createElement('span');
-        h.className = 'bd2-heart'; h.setAttribute('role', 'button'); h.title = '收藏';
+        h.className = 'bd2-heart'; h.setAttribute('role', 'button');
         h.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
         h.addEventListener('click', function (e) {
           e.stopPropagation(); e.preventDefault();
@@ -423,7 +430,7 @@
         name.className = 'bd2-fname';
         name.textContent = displayOf(id) || id;
         var h = document.createElement('span');
-        h.className = 'bd2-heart on'; h.title = '取消收藏';
+        h.className = 'bd2-heart on';
         h.appendChild(heartSvg(true));
         h.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
         h.addEventListener('click', function (e) {
@@ -440,12 +447,16 @@
       });
     }
     var prev = document.createElement('button');
-    prev.type = 'button'; prev.textContent = '‹'; prev.title = '上一页';
+    prev.type = 'button';
+    var prevTri = document.createElement('span');
+    prevTri.className = 'bd2-tri bd2-tri--left'; prev.appendChild(prevTri);
     prev.addEventListener('click', function () {
       favPage = favPage > 1 ? favPage - 1 : total; lastFavKey = ''; renderFavList();
     });
     var next = document.createElement('button');
-    next.type = 'button'; next.textContent = '›'; next.title = '下一页';
+    next.type = 'button';
+    var nextTri = document.createElement('span');
+    nextTri.className = 'bd2-tri bd2-tri--right'; next.appendChild(nextTri);
     next.addEventListener('click', function () {
       favPage = favPage < total ? favPage + 1 : 1; lastFavKey = ''; renderFavList();
     });
@@ -461,8 +472,6 @@
     if (t) {
       setHeart(t, favOnly);
       if (t.classList.contains('on') !== favOnly) t.classList.toggle('on', favOnly);
-      var ti = favOnly ? '退出收藏列表（' + favs.size + '）' : '收藏列表' + (favs.size ? '（' + favs.size + '）' : '');
-      if (t.title !== ti) t.title = ti;
       if (t.classList.contains('wc-elem--active') !== favOnly) t.classList.toggle('wc-elem--active', favOnly);
       return;
     }
@@ -501,7 +510,6 @@
       var r = document.createElement('button');
       r.type = 'button'; r.className = 'bd2-random';
       r.textContent = '🎲';
-      r.title = '随机换一个（当前列表）';
       r.addEventListener('click', function () { randomPick(); });
       row.appendChild(r);
       list.parentNode.insertBefore(row, list.nextSibling);
@@ -599,7 +607,7 @@
     }
     timerBusy = true;
     Promise.resolve()
-      .then(function () { return randomPick(); })
+      .then(function () { return randomPick(true); })
       .catch(function () {})
       .then(function () { timerBusy = false; if (timerOn) startTimer(); });
   }
@@ -615,7 +623,6 @@
       });
       var step = document.createElement('button');
       step.type = 'button'; step.className = 'bd2-timer-secs';
-      step.title = '点击切换间隔';
       step.addEventListener('click', function () {
         var i = TIMER_STEPS.indexOf(timerSecs);
         timerSecs = TIMER_STEPS[(i + 1) % TIMER_STEPS.length];
@@ -626,12 +633,11 @@
     }
     var b = row.querySelector('.bd2-timer-toggle');
     paintTimerLabel();
-    b.title = timerOn ? '点击停止（面板打开时暂停计时）' : '按设定间隔自动换一个';
     var i2 = row.querySelector('.bd2-timer-secs');
     var label = secsLabel(timerSecs);
     if (i2 && i2.textContent !== label) i2.textContent = label;
   }
-  async function randomPick() {
+  async function randomPick(quiet) {
     var ids = candidates();
     if (!ids.length) { toast(favOnly ? '收藏夹是空的' : '当前列表是空的'); return; }
     var id = nextPick(ids);
@@ -641,6 +647,7 @@
     var pageNow = favOnly ? favPage : curPage();
     var pageTotal = favOnly ? Math.max(1, Math.ceil(favIds().length / PAGE)) : totalPages();
     if (window.__bd2fav) window.__bd2fav.lastJump = { id: id, page: pageNow, jumped: jumped };
+    if (quiet) return;   // 定时轮播不打扰：面板关着时弹 toast 是噪音
     var name = displayOf(id) || id;
     var where = '（第 ' + pageNow + '/' + pageTotal + ' 页）';
     toast(ok ? '随机：' + name + (jumped ? where : '') : '定位失败' + where);
@@ -655,9 +662,15 @@
     }, 600);
     pendingClear = false;
   }
+  /* 全页 tooltip 禁用：连上游 bundle 的 title 也一起剥掉（只影响提示，不影响功能） */
+  function stripTitles() {
+    var els = document.querySelectorAll('[title]');
+    for (var i = 0; i < els.length; i++) els[i].removeAttribute('title');
+  }
   function ensure() {
     if (!DB) return;
     if (!document.querySelector(SEL.panel)) return;
+    stripTitles();
     if (favOnly && !pendingClear && activeElem()) { favOnly = false; save(); }
     paintFavTab(); paintTools(); paintTimer(); paintHearts(); applyMode();
   }
@@ -685,6 +698,11 @@
       timer: function () { return { on: timerOn, secs: timerSecs }; }
     };
     startTimer();
+    // 动态后加的 title 也要在显示前掐掉（捕获期，悬停 dwell 之前移除就不会弹）
+    document.addEventListener('mouseover', function (e) {
+      var t = e.target && e.target.closest ? e.target.closest('[title]') : null;
+      if (t) t.removeAttribute('title');
+    }, true);
     document.addEventListener('visibilitychange', function () {
       if (timerOn && !document.hidden) startTimer();
     });
