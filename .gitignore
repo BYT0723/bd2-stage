@@ -1,0 +1,23 @@
+# 素材（make sync 可重建）
+assets/spines/
+assets/audios/
+assets/*.png
+assets/*.atlas
+assets/*.skel
+
+# 上游构建产物与生成的运行时文件
+assets/index-*.js
+assets/index-*.css
+assets/bd2-data.js
+assets/bd2-fav-random.js
+
+# Steam 原始资源
+preview.gif
+favicon.ico
+
+# 杂项
+*.bak
+*.log
+__pycache__/
+*.pyc
+.DS_Store
