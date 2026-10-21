@@ -1,3 +1,4 @@
+# bd2-stage · BD2 立绘舞台
 PY ?= python3
 
 .PHONY: help sync patch verify check smoke all manifest
