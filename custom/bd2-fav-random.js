@@ -512,19 +512,17 @@
       r.textContent = '🎲';
       r.addEventListener('click', function () { randomPick(); });
       row.appendChild(r);
-      list.parentNode.insertBefore(row, list.nextSibling);
+      list.parentNode.insertBefore(row, list);
     }
     var rr = row.querySelector('.bd2-random');
     if (rr && rr.textContent !== '🎲') rr.textContent = '🎲';
   }
   function positionTools() {
     var r = document.querySelector('.bd2-tools');
-    if (!r) return;
-    var pager = favOnly ? document.querySelector('.bd2-fnav')
-                        : document.querySelector('.wc-listnav');
-    if (!pager || !pager.parentNode) return;
-    if (r.nextSibling === pager && r.parentNode === pager.parentNode) return;
-    pager.parentNode.insertBefore(r, pager);
+    var list = document.querySelector(SEL.list);
+    if (!r || !list || !list.parentNode) return;
+    if (r.nextSibling === list && r.parentNode === list.parentNode) return;
+    list.parentNode.insertBefore(r, list);
   }
   /* 收藏模式：隐藏原列表，显示收藏列表 */
   function applyMode() {
