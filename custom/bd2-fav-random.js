@@ -7,6 +7,38 @@
   var ELEMS = ['fire', 'water', 'wind', 'light', 'dark', 'none'];
   var LANGS = ['zh', 'ja', 'en'];
   var TAGS = ['（本地）', '（ローカル）', ' (local)'];
+  /* 新增控件文案：跟面板语言（中/日/英）走，zh 缺键时回退 */
+  var I18N = {
+    zh: {
+      timerOff: '⏱ 定时随机', timerWait: '⏱ 面板关闭后计时', timerCount: '⏱ {n} 秒后换',
+      durSec: '{n} 秒', durMin: '{n} 分', durHour: '1 小时', durMinSec: '{m} 分 {s} 秒',
+      favEmpty: '还没有收藏，给喜欢的角色点颗❤吧',
+      pageInfo: '第 {a}/{b} 页 · 共 {n} 个', pageShort: '第 {a}/{b} 页', lp: '（', rp: '）',
+      emptyFav: '收藏夹是空的', emptyList: '当前列表是空的',
+      picked: '随机：', locateFail: '定位失败'
+    },
+    ja: {
+      timerOff: '⏱ 定期ランダム', timerWait: '⏱ パネルを閉じたら開始', timerCount: '⏱ あと{n}秒で切替',
+      durSec: '{n} 秒', durMin: '{n} 分', durHour: '1 時間', durMinSec: '{m} 分 {s} 秒',
+      favEmpty: 'お気に入りはまだありません、好きなキャラに❤をつけてね',
+      pageInfo: '{a}/{b} ページ · 計 {n} 件', pageShort: '{a}/{b} ページ', lp: '（', rp: '）',
+      emptyFav: 'お気に入りが空です', emptyList: 'このリストは空です',
+      picked: 'ランダム：', locateFail: '移動に失敗'
+    },
+    en: {
+      timerOff: '⏱ Auto shuffle', timerWait: '⏱ Starts when panel closed', timerCount: '⏱ Next in {n}s',
+      durSec: '{n}s', durMin: '{n}m', durHour: '1h', durMinSec: '{m}m {s}s',
+      favEmpty: 'No favorites yet — tap ❤ on characters you like',
+      pageInfo: 'Page {a}/{b} · {n} total', pageShort: 'Page {a}/{b}', lp: '(', rp: ')',
+      emptyFav: 'Favorites list is empty', emptyList: 'This list is empty',
+      picked: 'Shuffled: ', locateFail: "Couldn't locate"
+    }
+  };
+  function t(key, vars) {
+    var s = (I18N[curLang()] || I18N.zh)[key] || I18N.zh[key] || key;
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.split('{' + k + '}').join(vars[k]); });
+    return s;
+  }
   var PAGE = 6;
   var SEL = {
     panel: '.wc-panel', list: '.wc-list', item: '.wc-list__item',
@@ -419,7 +451,7 @@
     if (!slice.length) {
       var e = document.createElement('div');
       e.className = 'bd2-empty';
-      e.textContent = '还没有收藏，给喜欢的角色点颗❤吧';
+      e.textContent = t('favEmpty');
       box.appendChild(e);
     } else {
       slice.forEach(function (id) {
@@ -461,7 +493,7 @@
       favPage = favPage < total ? favPage + 1 : 1; lastFavKey = ''; renderFavList();
     });
     var info = document.createElement('span');
-    info.textContent = '第 ' + favPage + '/' + total + ' 页 · 共 ' + ids.length + ' 个';
+    info.textContent = t('pageInfo', { a: favPage, b: total, n: ids.length });
     nav.appendChild(info); nav.appendChild(prev); nav.appendChild(next);
   }
   /* 属性行第 7 个图标：收藏类目 */
@@ -562,10 +594,10 @@
     return lastPick;
   }
   function secsLabel(n) {
-    if (n < 60) return n + ' 秒';
-    if (n % 60 === 0 && n < 3600) return (n / 60) + ' 分';
-    if (n === 3600) return '1 小时';
-    return Math.floor(n / 60) + ' 分 ' + (n % 60) + ' 秒';
+    if (n < 60) return t('durSec', { n: n });
+    if (n % 60 === 0 && n < 3600) return t('durMin', { n: n / 60 });
+    if (n === 3600) return t('durHour');
+    return t('durMinSec', { m: Math.floor(n / 60), s: n % 60 });
   }
   function panelVisible() {
     var el = document.querySelector(SEL.panel);
@@ -575,11 +607,11 @@
     var row = document.querySelector('.bd2-tools');
     var b = row && row.querySelector('.bd2-timer-toggle');
     if (!b) return;
-    var t;
-    if (!timerOn) t = '⏱ 定时随机';
-    else if (panelVisible()) t = '⏱ 面板关闭后计时';
-    else t = '⏱ ' + Math.max(0, Math.ceil((timerNextAt - Date.now()) / 1000)) + ' 秒后换';
-    if (b.textContent !== t) b.textContent = t;
+    var txt;
+    if (!timerOn) txt = t('timerOff');
+    else if (panelVisible()) txt = t('timerWait');
+    else txt = t('timerCount', { n: Math.max(0, Math.ceil((timerNextAt - Date.now()) / 1000)) });
+    if (b.textContent !== txt) b.textContent = txt;
     if (b.classList.contains('on') !== timerOn) b.classList.toggle('on', timerOn);
   }
   function stopTimer() {
@@ -637,7 +669,7 @@
   }
   async function randomPick(quiet) {
     var ids = candidates();
-    if (!ids.length) { toast(favOnly ? '收藏夹是空的' : '当前列表是空的'); return; }
+    if (!ids.length) { toast(favOnly ? t('emptyFav') : t('emptyList')); return; }
     var id = nextPick(ids);
     if (ids.length > 1 && id === curChar()) id = nextPick(ids);   // 尽量别选中当前这个
     var ok = await setCharacter(id);
@@ -647,8 +679,8 @@
     if (window.__bd2fav) window.__bd2fav.lastJump = { id: id, page: pageNow, jumped: jumped };
     if (quiet) return;   // 定时轮播不打扰：面板关着时弹 toast 是噪音
     var name = displayOf(id) || id;
-    var where = '（第 ' + pageNow + '/' + pageTotal + ' 页）';
-    toast(ok ? '随机：' + name + (jumped ? where : '') : '定位失败' + where);
+    var where = t('lp') + t('pageShort', { a: pageNow, b: pageTotal }) + t('rp');
+    toast(ok ? t('picked') + name + (jumped ? where : '') : t('locateFail') + where);
   }
   async function clearElemFilter() {
     var act = document.querySelector('.wc-elem:not(.bd2-fav).wc-elem--active');
