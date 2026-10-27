@@ -98,6 +98,20 @@
 				"text": "语音音量 % (Voice Volume)",
 				"type": "slider",
 				"value": 35
+			},
+			"bgImageLight": {
+				"index": 12,
+				"order": 112,
+				"text": "浅色模式背景 Light Background（留空用内置素纸）",
+				"type": "file",
+				"value": "backgrounds/bd2-parchment-2560x1440.jpg"
+			},
+			"bgImageDark": {
+				"index": 13,
+				"order": 113,
+				"text": "深色模式背景 Dark Background（留空用内置星空）",
+				"type": "file",
+				"value": "backgrounds/bd2-starlit-vault-2560x1440.jpg"
 			}
 		}
 	},

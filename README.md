@@ -16,6 +16,32 @@ Brown Dust 2 Live2D 壁纸：234 个角色全本地加载，支持收藏 / 随�
 - 悬浮球选人 + 右键属性调位置 / 缩放 / 背景 / 音量 / 主题色
 - 语音按需加载 + 3 路复用，不再换人堆积 Audio 元素
 
+## 背景（配套壁纸）
+
+立绘才是主角，所以三张背景都按“低对比舞台”做：中间亮、四周暗、右侧留白给属性面板，
+颜色取自悬浮球的暗金配色，边缘没有画框线（背景是 `object-cover` 且可拖动，边缘一定会被裁）。
+
+| 暖金舞台 | 深靛星空 | 素纸 |
+| :-: | :-: | :-: |
+| ![gilded](backgrounds/preview-gilded.jpg) | ![starlit](backgrounds/preview-starlit.jpg) | ![paper](backgrounds/preview-paper.jpg) |
+
+| 文件（2560×1440） | 适合 |
+| ---- | ---- |
+| `backgrounds/bd2-gilded-stage-2560x1440.jpg` | 暖光把人从暗底里托起来，跟暗金 UI 同源（WE 里可以直接手选） |
+| `backgrounds/bd2-starlit-vault-2560x1440.jpg` | **深色默认**，深靛星空正好接住页面自带的星尘粒子 |
+| `backgrounds/bd2-parchment-2560x1440.jpg` | **浅色默认**，干净暖白纸底带细纸纹，适合浅色立绘 |
+
+用法：
+
+- **跟随系统**：默认按 `prefers-color-scheme` 选——浅色用素纸、深色用星空。GNOME 里就是
+  `gsettings set org.gnome.desktop.interface color-scheme prefer-dark`（或 `default`），
+  切完壁纸自己换；页面里执行不了 gsettings，读到的是同一个开关
+- **Wallpaper Engine**：属性面板新增「浅色模式背景 / 深色模式背景」，各自指到自己那张图，
+  系统配色一变就实时切。WE 的 CEF 一般恒报浅色，这时只有浅色那张生效，想固定深色就把两张设成同一张
+- **手动覆盖**：面板里「背景图片」选一张后就不再跟随系统，想恢复跟随就点「清除」
+- 浏览器预览：面板里「背景图片」填 `./backgrounds/bd2-starlit-vault-2560x1440.jpg`
+- 换尺寸 / 换配色：`make bg`，脚本见 `tools/gen_background.py`（`--size 3440x1440`、`--only a`）
+
 ## 用法
 
 ### 直接预览

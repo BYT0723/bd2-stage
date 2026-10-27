@@ -8,7 +8,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 CUSTOM = ROOT / "custom"
 TEMPLATE = ROOT / "templates" / "index.html"
 
-ASSETS = ["bd2-data.js", "bd2-fav-random.js"]
+ASSETS = ["bd2-data.js", "bd2-bg-theme.js", "bd2-fav-random.js"]
 
 def main():
     for name in ASSETS:

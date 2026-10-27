@@ -33,6 +33,34 @@ PATCHES = [
         "I={key:e.key,clips:t}}",
         "语音池/不预加载",
     ),
+    # 背景跟随系统 light/dark：bgImageLight / bgImageDark 两个属性存两张图，
+    # 按 prefers-color-scheme 选，系统切换时实时换（不重载）。
+    # 手动选的图（既不是内置两张、也不是空）保持不动；bgImage 仍是最高的手动覆盖。
+    (
+        "nb={bgImage:`customBackgroundImage`};function rb(e){",
+        "nb={bgImage:`customBackgroundImage`};"
+        "var bd2Bg={light:``,dark:``,manual:``},"
+        "BD2_BG_AUTO=[`./backgrounds/bd2-parchment-2560x1440.jpg`,"
+        "`./backgrounds/bd2-starlit-vault-2560x1440.jpg`];"
+        "function bd2Dark(){try{return matchMedia(`(prefers-color-scheme: dark)`).matches}"
+        "catch(e){return!1}}"
+        "function bd2Apply(){if(!sb)return;var c=String(sb.customBackgroundImage||``);"
+        "if(!bd2Bg.manual&&c&&BD2_BG_AUTO.indexOf(c)<0&&c!==bd2Bg.light&&c!==bd2Bg.dark)return;"
+        "var d=bd2Dark(),p=bd2Bg.manual||bd2Bg[d?`dark`:`light`]||BD2_BG_AUTO[d?1:0];"
+        "if(!p||p===c)return;sb.customBackgroundImage=p;try{ib()}catch(e){}}"
+        "try{matchMedia(`(prefers-color-scheme: dark)`).addEventListener(`change`,bd2Apply)}"
+        "catch(e){}function rb(e){",
+        "浅色/深色背景",
+    ),
+    (
+        "if(nb[n]){e[nb[n]]=rb(String(t??``));continue}",
+        "if(n==`bgImageLight`||n==`bgImageDark`){"
+        "bd2Bg[n===`bgImageLight`?`light`:`dark`]=rb(String(t??``)),"
+        "window.__bd2BgLive=!0,bd2Apply();continue}"
+        "if(nb[n]){e[nb[n]]=rb(String(t??``));"
+        "if(n===`bgImage`){bd2Bg.manual=String(e[nb[n]]||``),bd2Apply()}continue}",
+        "浅色/深色背景属性",
+    ),
 ]
 
 def main():

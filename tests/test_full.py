@@ -19,6 +19,9 @@ def test_bundle_patched():
     assert "bd2AudioPool" in js, "语音元素未复用（换人次数一多会堆积 Audio）"
     assert "t.preload=`none`" in js, "语音应在点击时才加载"
     assert "t.onerror=()=>" in js, "复用元素必须覆盖监听器，不能 addEventListener 叠加"
+    assert "bgImageLight" in js, "浅色/深色背景属性未接线"
+    assert "BD2_BG_AUTO" in js, "背景默认值未注入"
+    assert "prefers-color-scheme: dark" in js, "背景必须跟随系统配色"
 
 def test_audio_patch_fingerprint():
     ref = (ROOT / "tasks" / "bundle-reference.js.txt").read_text()

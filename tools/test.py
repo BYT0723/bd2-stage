@@ -13,6 +13,7 @@ CASES = [
     fav.test_inject_script,
     fav.test_logo_removed,
     fav.test_versions_stamped,
+    fav.test_bg_theme_script,
     fav.test_dist_matches_live,
     full.test_manifest_complete,
     full.test_bundle_patched,

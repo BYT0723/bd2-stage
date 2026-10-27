@@ -77,12 +77,24 @@ def test_logo_removed():
 def test_versions_stamped():
     html = (LIVE / "index.html").read_text()
     assert "?v=DEV" not in html, "线上版本号未被 deploy.py 替换"
-    for name in ["bd2-data.js", "bd2-fav-random.js"]:
+    for name in ["bd2-data.js", "bd2-bg-theme.js", "bd2-fav-random.js"]:
         m = re.search(re.escape(name) + r"\?v=([0-9a-f]{10})", html)
         assert m, f"{name} 缺内容哈希版本号"
         import hashlib
         h = hashlib.sha256((LIVE / "assets" / name).read_bytes()).hexdigest()[:10]
         assert m.group(1) == h, f"{name} 版本号与内容不一致（缓存不会刷新）"
+
+def test_bg_theme_script():
+    s = (CUSTOM / "bd2-bg-theme.js").read_text()
+    assert "prefers-color-scheme" in s, "必须按系统配色选背景"
+    assert "bd2-wallpaper-prefs" in s, "必须走应用自己的持久化入口"
+    assert "window.__bd2BgLive" in s, "有 WE 属性时交给补丁实时切，不重载"
+    assert "location.reload" in s, "无属性时系统切换后必须重载才生效"
+    assert "bd2-parchment" in s and "bd2-starlit-vault" in s, "默认必须是素纸/星空"
+    assert "http://" not in s and "https://" not in s, "外挂不得有远程请求"
+    assert "fetch(" not in s, "file 协议下 fetch 会被拦"
+    assert "document." not in s, "外挂必须在 bundle 之前只碰 localStorage"
+
 
 def test_dist_matches_live():
     import hashlib
