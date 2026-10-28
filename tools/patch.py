@@ -52,7 +52,7 @@ PATCHES = [
         "else{bd2Bg.ai=w;if(w!==c)sb.customBackgroundImage=w;"
         "if(v)sb.customBackgroundVideo=``}"
         "try{ib()}catch(e){}}"
-        "function bd2FgApply(force){if(!sb)return;"
+        "function bd2FgApply(){if(!sb)return;"
         "var w=bd2Fg.img||``;"
         "var c=String(sb.customForegroundImage||``),"
         "v=String(sb.customForegroundVideo||``);"
@@ -70,7 +70,7 @@ PATCHES = [
         "if(n==`background`||n==`foreground`){"
         "if(n==`foreground`){"
         "bd2Fg.img=rb(String(t??``)),"
-        "window.__bd2BgLive=!0,bd2FgApply(1)}else{"
+        "window.__bd2BgLive=!0,bd2FgApply()}else{"
         "bd2Bg.img=rb(String(t??``)),"
         "window.__bd2BgLive=!0,bd2Apply(1)}continue}",
         "背景/前景属性",
