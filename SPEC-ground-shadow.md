@@ -11,7 +11,8 @@ screen 灯光层只能加亮、画不出影子，所以单独加一层接地影�
 - 纯 bundle 补丁（`tools/patch.py`），不新增属性、不加生成图
 - 一个 DOM 层 `.bd2-fg-shadow`，`radial-gradient` 椭圆，`pointer-events:none`
 - 层级：背景 < 影子(z-5) < 人物(z-10) < 灯光(z-20)。灯光是 screen 加亮、盖在最上面，
-  会把影子洗掉，所以在灯光层同一位置用 `mask-image` 挖一个洞（等于“影子挡住地面光”）
+  会把影子洗掉，所以在灯光层同一位置用 `mask-image` 挖洞（等于“影子挡住地面光”）。
+  洞的半径和衰减曲线与影子完全一致——两个形状不一致时会出现“小黑盘 + 大黑圈”双轮廓
 - 两个滑块属性 `shadowOffsetX` / `shadowOffsetY`，相对人物微调影子位置
 
 ## Commands
@@ -31,7 +32,7 @@ X 跟人物走，Y 锚地面线——不跟人物脚底走。原因：不同角�
 ```text
 中心 x = 0.5 + 0.02*scale - roleOffsetX/100 + shadowOffsetX/100
 中心 y = 0.945 + shadowOffsetY/100        # 0.945 = 背景光池那条地面线
-宽 0.190*scale，高 0.050*scale
+宽 0.235*scale，高 0.062*scale
 ```
 
 实测：缩放绕画面中心（scale 0.75 → 人物中心 0.515，1.00 → 0.519）；

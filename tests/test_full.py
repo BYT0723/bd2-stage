@@ -52,7 +52,7 @@ def test_bundle_patched():
     assert "h.shadowOffsetX,h.shadowOffsetY" in js, "接地影没跟随位移属性"
     assert "bd2Shadow()})" in js, "接地影没跟上 watcher"
     assert "z-index:5" in js, "接地影必须在背景之上、人物之下（z-index:5）"
-    assert "radial-gradient(closest-side,rgba(0,0,0,.72)" in js, "接地影渐变未注入"
+    assert "radial-gradient(closest-side,rgba(0,0,0,.75)" in js, "接地影渐变未注入"
     assert "maskImage=m" in js, "灯光层没挖洞，影子会被 screen 洗掉"
     for name in ("shadowOffsetX", "shadowOffsetY"):
         assert name in props and props[name].get("type") == "slider", f"{name} 属性缺失"
