@@ -33,33 +33,72 @@ PATCHES = [
         "I={key:e.key,clips:t}}",
         "语音池/不预加载",
     ),
-    # 背景跟随系统 light/dark：bgImageLight / bgImageDark 两个属性存两张图，
-    # 按 prefers-color-scheme 选，系统切换时实时换（不重载）。
-    # 手动选的图（既不是内置两张、也不是空）保持不动；bgImage 仍是最高的手动覆盖。
+    # 背景双属性：background（通用）/ background_dark（深色），图片视频都吃。
+    # 按 prefers-color-scheme 选；深色留空跟通用，通用留空跟内置。
+    # 属性下发走 bd2Apply(1)（force）：必须压过 localStorage 里的旧手选值，
+    # 否则用户之前手选过背景（甚至把 webm 塞进图片位）后再设属性会被永久拦死
+    # ——旧图变“生人”，<img> 加载失败又清空背景，表现为“怎么设都没反应”。
+    # 只有跟随系统/启动默认 bd2Apply() 才尊重手选。
+    # ai 追踪上次解析出的图片值，避免值变更后旧值被当生人。
     (
         "nb={bgImage:`customBackgroundImage`};function rb(e){",
-        "nb={bgImage:`customBackgroundImage`};"
-        "var bd2Bg={light:``,dark:``,manual:``},"
+        "nb={};"
+        "var bd2Bg={img:``,dark:``,ai:``},"
         "BD2_BG_AUTO=[`./backgrounds/bd2-parchment-2560x1440.jpg`,"
         "`./backgrounds/bd2-starlit-vault-2560x1440.jpg`];"
         "function bd2Dark(){try{return matchMedia(`(prefers-color-scheme: dark)`).matches}"
         "catch(e){return!1}}"
-        "function bd2Apply(){if(!sb)return;var c=String(sb.customBackgroundImage||``);"
-        "if(!bd2Bg.manual&&c&&BD2_BG_AUTO.indexOf(c)<0&&c!==bd2Bg.light&&c!==bd2Bg.dark)return;"
-        "var d=bd2Dark(),p=bd2Bg.manual||bd2Bg[d?`dark`:`light`]||BD2_BG_AUTO[d?1:0];"
-        "if(!p||p===c)return;sb.customBackgroundImage=p;try{ib()}catch(e){}}"
+        "function bd2Apply(force){if(!sb)return;"
+        "var c=String(sb.customBackgroundImage||``),v=String(sb.customBackgroundVideo||``);"
+        "if(!force&&c&&BD2_BG_AUTO.indexOf(c)<0&&c!==bd2Bg.ai&&c!==bd2Bg.img&&c!==bd2Bg.dark)return;"
+        "var d=bd2Dark(),"
+        "w=d?(bd2Bg.dark||bd2Bg.img||BD2_BG_AUTO[1]):(bd2Bg.img||BD2_BG_AUTO[0]);"
+        "if(/\\.(webm|mp4)(\\?.*)?$/i.test(w)){"
+        "if(v!==w)sb.customBackgroundVideo=w;"
+        "if(c)sb.customBackgroundImage=``}"
+        "else{bd2Bg.ai=w;if(w!==c)sb.customBackgroundImage=w;"
+        "if(v)sb.customBackgroundVideo=``}"
+        "try{ib()}catch(e){}}"
         "try{matchMedia(`(prefers-color-scheme: dark)`).addEventListener(`change`,bd2Apply)}"
         "catch(e){}function rb(e){",
         "浅色/深色背景",
     ),
     (
         "if(nb[n]){e[nb[n]]=rb(String(t??``));continue}",
-        "if(n==`bgImageLight`||n==`bgImageDark`){"
-        "bd2Bg[n===`bgImageLight`?`light`:`dark`]=rb(String(t??``)),"
-        "window.__bd2BgLive=!0,bd2Apply();continue}"
-        "if(nb[n]){e[nb[n]]=rb(String(t??``));"
-        "if(n===`bgImage`){bd2Bg.manual=String(e[nb[n]]||``),bd2Apply()}continue}",
+        "if(n==`background`||n==`background_dark`){"
+        "bd2Bg[n==`background`?`img`:`dark`]=rb(String(t??``)),"
+        "window.__bd2BgLive=!0,bd2Apply(1);continue}",
         "浅色/深色背景属性",
+    ),
+    # 双属性分支：background（通用）/ background_dark（深色），图片视频都吃。
+    # 独立状态位 customBackgroundVideo（不复用图片位，避免 <img>
+    # 误加载 webm 触发 onerror 把背景自清）。
+    (
+        "customBackgroundImage:null,layerNames:[]",
+        "customBackgroundImage:null,customBackgroundVideo:null,layerNames:[]",
+        "视频背景状态位",
+    ),
+    (
+        "}catch{}}var ab={",
+        "}catch{}}function bd2Video(r,a){var m=r.querySelector(`video`),"
+        "ok=/\\.(webm|mp4)(\\?.*)?$/i.test(a);"
+        "if(!ok){if(m){try{m.pause()}catch(e){}m.remove()}return}"
+        "if(!m){m=document.createElement(`video`);m.muted=!0;m.loop=!0;m.autoplay=!0;"
+        "m.setAttribute(`playsinline`,``);"
+        "m.onerror=function(){try{m.remove()}catch(e){}};"
+        "m.style.cssText=`position:absolute;inset:0;width:100%;height:100%;"
+        "object-fit:cover;pointer-events:none`;r.appendChild(m)}"
+        "if(m.getAttribute(`src`)!==a){m.setAttribute(`src`,a);"
+        "try{var p=m.play();p&&p.catch&&p.catch(function(){"
+        "try{m.remove()}catch(e){}})}catch(e){}}}"
+        "var ab={",
+        "视频背景元素",
+    ),
+    (
+        "let a=String(e.customBackgroundImage??``);",
+        "let a=String(e.customBackgroundImage??``),"
+        "v=String(e.customBackgroundVideo??``);bd2Video(r,v);",
+        "视频背景应用",
     ),
 ]
 

@@ -8,7 +8,7 @@
  * 系统切换后重载一次即可。
  *
  * 手动选的图（prefs 里既不是空白、也不是内置这两张）一律尊重，不再跟随系统。
- * Wallpaper Engine 里配了 bgImageLight/bgImageDark 时，bundle 补丁会设
+ * Wallpaper Engine 里配了 background/background_dark 时，bundle 补丁会设
  * window.__bd2BgLive，此时交给补丁实时切，本脚本不再重载。
  */
 (function () {
@@ -32,13 +32,30 @@
     return !!cur && AUTO.indexOf(cur) < 0;
   }
 
+  /* 旧版本把视频塞进过图片位（bgImage=xxx.webm）：图片元素必然加载失败，
+   * 失败回调会把 customBackgroundImage 置 null，连属性下发的值一起抹掉，
+   * 表现为“怎么设背景都没反应”。启动前把视频值从图片位清掉，交给属性/默认值。 */
+  function sanitize(prefs) {
+    var cur = String(prefs.customBackgroundImage || '');
+    if (/\.(webm|mp4)(\?.*)?$/i.test(cur)) {
+      prefs.customBackgroundImage = '';
+      return true;
+    }
+    return false;
+  }
+
   /* 需要时写入对应背景，返回是否真的改了 */
   function apply() {
     var prefs = readPrefs();
-    if (isManual(prefs)) return false;
-    var want = AUTO[isDark() ? 1 : 0];
-    if (prefs.customBackgroundImage === want) return false;
-    prefs.customBackgroundImage = want;
+    var dirty = sanitize(prefs);
+    if (!isManual(prefs)) {
+      var want = AUTO[isDark() ? 1 : 0];
+      if (prefs.customBackgroundImage !== want) {
+        prefs.customBackgroundImage = want;
+        dirty = true;
+      }
+    }
+    if (!dirty) return false;
     try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) {}
     return true;
   }

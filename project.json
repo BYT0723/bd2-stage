@@ -11,13 +11,6 @@
 				"type": "color",
 				"value": "1.000000 1.000000 1.000000"
 			},
-			"bgImage": {
-				"index": 11,
-				"order": 111,
-				"text": "背景图片（选填，选一张图片当背景）",
-				"type": "file",
-				"value": ""
-			},
 			"roleOffsetX": {
 				"fraction": false,
 				"index": 1,
@@ -99,19 +92,19 @@
 				"type": "slider",
 				"value": 35
 			},
-			"bgImageLight": {
+			"background": {
 				"index": 12,
 				"order": 112,
-				"text": "浅色模式背景 Light Background（留空用内置素纸）",
+				"text": "背景 Background（图片或视频；深色模式未单独设时通用）",
 				"type": "file",
-				"value": "backgrounds/bd2-parchment-2560x1440.jpg"
+				"value": ""
 			},
-			"bgImageDark": {
+			"background_dark": {
 				"index": 13,
 				"order": 113,
-				"text": "深色模式背景 Dark Background（留空用内置星空）",
+				"text": "深色背景 Dark background（图片或视频；留空跟通用）",
 				"type": "file",
-				"value": "backgrounds/bd2-starlit-vault-2560x1440.jpg"
+				"value": ""
 			}
 		}
 	},

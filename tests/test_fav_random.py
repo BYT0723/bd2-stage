@@ -87,6 +87,7 @@ def test_versions_stamped():
 def test_bg_theme_script():
     s = (CUSTOM / "bd2-bg-theme.js").read_text()
     assert "prefers-color-scheme" in s, "必须按系统配色选背景"
+    assert "sanitize" in s and "webm|mp4" in s, "启动前必须清洗图片位里的视频值"
     assert "bd2-wallpaper-prefs" in s, "必须走应用自己的持久化入口"
     assert "window.__bd2BgLive" in s, "有 WE 属性时交给补丁实时切，不重载"
     assert "location.reload" in s, "无属性时系统切换后必须重载才生效"

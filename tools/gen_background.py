@@ -208,6 +208,88 @@ def scene_parchment(w, h, rng):
     return img
 
 
+def _cone(img, x, y, cx_top, cx_bot, w_top, w_bot, color, alpha):
+    """一道从上往下的锥形光：中心随 y 漂移、宽度随 y 变宽，无硬边。"""
+    cx = cx_top + (cx_bot - cx_top) * y
+    sigma = w_top + (w_bot - w_top) * y
+    mask = np.exp(-(((x - cx) / np.maximum(sigma, 1e-3)) ** 2) * 2.0)
+    mask *= (1.0 - smoothstep(0.86, 1.0, y)) * alpha
+    return over(img, np.array(color, np.float32) / 255, mask)
+
+
+def scene_spotlight(w, h, rng):
+    """D · 暖金单束：暗底 + 头顶一道暖金追光 + 地面光池（主推）。"""
+    img = vertical([(0.00, (12, 9, 7)), (0.24, (24, 18, 13)),
+                    (0.56, (34, 26, 18)), (0.80, (21, 16, 11)),
+                    (1.00, (9, 7, 5))], h, w)
+    x, y = grid(h, w)
+    img = over(img, np.array([124, 112, 146], np.float32) / 255,
+               radial(h, w, 0.80, 0.20, 0.34, 0.34, 1.8) * 0.12)
+    img = over(img, np.array([255, 219, 168], np.float32) / 255,
+               radial(h, w, 0.47, 0.45, 0.26, 0.28, 2.0) * 0.40)
+    img = _cone(img, x, y, 0.47, 0.47, 0.028, 0.13,
+                (255, 224, 178), 0.55)
+    img = _cone(img, x, y, 0.47, 0.47, 0.075, 0.27,
+                (236, 206, 166), 0.20)
+    img *= (1.0 - 0.20 * smoothstep(0.74, 0.84, y))[:, :, None]
+    img = over(img, np.array([252, 222, 176], np.float32) / 255,
+               radial(h, w, 0.47, 0.925, 0.32, 0.10, 2.0) * 0.28)
+    img *= (1.0 - 0.26 * smoothstep(0.88, 1.0, y))[:, :, None]
+    return img
+
+
+def scene_frost(w, h, rng):
+    """E · 冷色单束：同构图换冰蓝，满足冷色偏好。"""
+    img = vertical([(0.00, (7, 10, 18)), (0.24, (13, 19, 35)),
+                    (0.56, (17, 23, 39)), (0.80, (12, 14, 26)),
+                    (1.00, (6, 7, 14))], h, w)
+    x, y = grid(h, w)
+    img = over(img, np.array([70, 110, 130], np.float32) / 255,
+               radial(h, w, 0.78, 0.22, 0.34, 0.34, 1.8) * 0.12)
+    img = over(img, np.array([170, 200, 255], np.float32) / 255,
+               radial(h, w, 0.47, 0.45, 0.26, 0.28, 2.0) * 0.38)
+    img = _cone(img, x, y, 0.47, 0.47, 0.028, 0.13,
+                (198, 220, 255), 0.55)
+    img = _cone(img, x, y, 0.47, 0.47, 0.075, 0.27,
+                (140, 170, 220), 0.20)
+    img *= (1.0 - 0.20 * smoothstep(0.74, 0.84, y))[:, :, None]
+    img = over(img, np.array([170, 200, 240], np.float32) / 255,
+               radial(h, w, 0.47, 0.925, 0.32, 0.10, 2.0) * 0.28)
+    img *= (1.0 - 0.26 * smoothstep(0.88, 1.0, y))[:, :, None]
+    return img
+
+
+def scene_fest(w, h, rng):
+    """F · 多向舞台束：暖中央主束 + 两侧冷束，地面三个光池，主次分明。"""
+    img = vertical([(0.00, (11, 9, 8)), (0.24, (22, 18, 15)),
+                    (0.56, (30, 24, 20)), (0.80, (19, 15, 13)),
+                    (1.00, (8, 7, 6))], h, w)
+    x, y = grid(h, w)
+    img = over(img, np.array([255, 219, 168], np.float32) / 255,
+               radial(h, w, 0.47, 0.45, 0.24, 0.26, 2.0) * 0.38)
+    img = over(img, np.array([150, 175, 230], np.float32) / 255,
+               radial(h, w, 0.36, 0.48, 0.20, 0.22, 2.0) * 0.16)
+    img = over(img, np.array([165, 165, 220], np.float32) / 255,
+               radial(h, w, 0.58, 0.48, 0.20, 0.22, 2.0) * 0.16)
+    img = _cone(img, x, y, 0.47, 0.47, 0.026, 0.12,
+                (255, 224, 178), 0.55)
+    img = _cone(img, x, y, 0.47, 0.47, 0.070, 0.25,
+                (236, 206, 166), 0.18)
+    img = _cone(img, x, y, 0.30, 0.38, 0.020, 0.085,
+                (170, 200, 255), 0.38)
+    img = _cone(img, x, y, 0.64, 0.56, 0.020, 0.085,
+                (180, 180, 235), 0.34)
+    img *= (1.0 - 0.20 * smoothstep(0.74, 0.84, y))[:, :, None]
+    img = over(img, np.array([252, 222, 176], np.float32) / 255,
+               radial(h, w, 0.47, 0.925, 0.26, 0.09, 2.0) * 0.28)
+    img = over(img, np.array([170, 200, 240], np.float32) / 255,
+               radial(h, w, 0.375, 0.925, 0.15, 0.07, 2.0) * 0.20)
+    img = over(img, np.array([180, 180, 235], np.float32) / 255,
+               radial(h, w, 0.565, 0.925, 0.15, 0.07, 2.0) * 0.18)
+    img *= (1.0 - 0.26 * smoothstep(0.88, 1.0, y))[:, :, None]
+    return img
+
+
 SCENES = {
     "a": dict(name="gilded-stage", fn=scene_gilded,
               grain=0.006, vig=0.34, scrim=0.26, dust=(1.00, 0.87, 0.64)),
@@ -216,6 +298,12 @@ SCENES = {
     "c": dict(name="parchment", fn=scene_parchment,
               grain=0.012, vig=0.18, scrim=0.04, dust=(0.62, 0.52, 0.36),
               dust_scale=0.25),
+    "d": dict(name="spotlight-stage", fn=scene_spotlight,
+              grain=0.006, vig=0.36, scrim=0.26, dust=(1.00, 0.87, 0.64)),
+    "e": dict(name="spotlight-frost", fn=scene_frost,
+              grain=0.005, vig=0.34, scrim=0.26, dust=(0.75, 0.82, 1.00)),
+    "f": dict(name="spotlight-fest", fn=scene_fest,
+              grain=0.006, vig=0.36, scrim=0.26, dust=(1.00, 0.87, 0.64)),
 }
 
 
