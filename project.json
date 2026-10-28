@@ -105,6 +105,26 @@
 				"text": "灯光效果 Foreground light（黑底screen叠加；图片或视频；空=关闭）",
 				"type": "file",
 				"value": ""
+			},
+			"shadowOffsetX": {
+				"fraction": false,
+				"index": 15,
+				"max": 50,
+				"min": -50,
+				"order": 115,
+				"text": "阴影水平偏移 % (Shadow horizontal)",
+				"type": "slider",
+				"value": 0
+			},
+			"shadowOffsetY": {
+				"fraction": false,
+				"index": 16,
+				"max": 50,
+				"min": -50,
+				"order": 116,
+				"text": "阴影垂直偏移 % (Shadow vertical)",
+				"type": "slider",
+				"value": 0
 			}
 		}
 	},

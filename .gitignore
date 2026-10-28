@@ -7,6 +7,7 @@ assets/*.skel
 
 # 上游构建产物与生成的运行时文件
 assets/index-*.js
+assets/index-*.js.orig
 assets/index-*.css
 assets/bd2-data.js
 assets/bd2-bg-theme.js

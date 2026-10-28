@@ -6,6 +6,8 @@ import pathlib, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BUNDLE = ROOT / "assets" / "index-Dsqno3tX.js"
+# 首次打补丁前手工留一份 pristine（.orig），之后从这里出发，产物怎么改都不怕
+ORIG = BUNDLE.with_name(BUNDLE.name + ".orig")
 
 PATCHES = [
     # 所有角色按本地素材处理（缺失时 bundle 自身仍会回退在线）
@@ -107,8 +109,17 @@ PATCHES = [
     (
         "customBackgroundImage:null,customBackgroundVideo:null,layerNames:[]",
         "customBackgroundImage:null,customBackgroundVideo:null,"
-        "customForegroundImage:null,customForegroundVideo:null,layerNames:[]",
+        "customForegroundImage:null,customForegroundVideo:null,"
+        "shadowOffsetX:0,shadowOffsetY:0,layerNames:[]",
         "前景状态位",
+    ),
+    # 接地影的位移滑块：走 tb 映射（!1 = 原值，不做 /100）
+    (
+        "panelOpacity:[`panelOpacity`,!0]},nb={}",
+        "panelOpacity:[`panelOpacity`,!0],"
+        "shadowOffsetX:[`shadowOffsetX`,!1],"
+        "shadowOffsetY:[`shadowOffsetY`,!1]},nb={}",
+        "接地影位移属性",
     ),
     (
         "}catch(e){}}}var ab={",
@@ -136,42 +147,51 @@ PATCHES = [
         "try{var _h=r.parentElement||r.parentNode,"
         "_fi=String(e.customForegroundImage??``),"
         "_fv=String(e.customForegroundVideo??``);bd2Light(_h,_fi,_fv);"
-        "bd2Shadow(sb&&sb.roleScale,sb&&sb.roleOffsetX,sb&&sb.roleOffsetY)}"
+        "bd2Shadow()}"
         "catch(_e){}",
         "前景应用",
     ),
-    # 接地影：screen 灯光层只能加亮，画不出影子，所以单独一层压在角色下面。
-    # 几何来自实测（1920x1080，脚底随缩放绕画面中心走）：
-    #   中心 x = 0.5 + 0.02*scale - offsetX/100
-    #   脚底 y = 0.5 + 0.42*scale - offsetY/100
-    #   脚部宽度 ~ 0.145*scale
-    # offset 的符号与直觉相反：正的 offsetX 让画面左移、正的 offsetY 让画面下移。
+    # 接地影：地面层，压在背景之上、人物之下（z-index:5，角色是 z-10）。
+    # 灯光层是 screen 加亮、盖在最上面，会把影子洗掉——所以同时在同一位置
+    # 给灯光层挖一个 mask 洞，等于“影子挡住了地面光”，物理上也对。
+    # 几何：
+    #   X 跟人物走（实测：缩放绕画面中心，0.02*scale 是人物中心的漂移）
+    #   Y 锚地面线 0.945（背景光池那条线），不跟人物脚底走——
+    #     不同角色脚高差很多（站姿 0.92、飘浮姿势更低），按脚估必然偏
+    #   shadowOffsetX/Y 是属性面板里的相对微调，单位是画面百分比
+    # offset 的符号与直觉相反：正的 roleOffsetX 让画面左移、正的 roleOffsetY 让画面下移。
     (
         "}catch(e){}}}function bd2Light(",
-        "}catch(e){}}}function bd2Shadow(sc,ox,oy){"
-        "var h=document.querySelector(`.bd2-bg-layer`);"
-        "if(!h)return;h=h.parentElement;if(!h)return;"
-        "var s=Number(sc);if(!Number.isFinite(s)||s<=0)s=1;"
-        "var dx=Number(ox)||0,dy=Number(oy)||0;"
+        "}catch(e){}}}function bd2Shadow(){"
+        "var bg=document.querySelector(`.bd2-bg-layer`);if(!bg)return;"
+        "var h=bg.parentElement;if(!h)return;"
+        "var st=sb||{},s=Number(st.roleScale);"
+        "if(!Number.isFinite(s)||s<=0)s=1;"
+        "var dx=Number(st.roleOffsetX)||0,dy=Number(st.roleOffsetY)||0,"
+        "sx=Number(st.shadowOffsetX)||0,sy=Number(st.shadowOffsetY)||0;"
         "var o=h.querySelector(`.bd2-fg-shadow`);"
         "if(!o){o=document.createElement(`div`);o.className=`bd2-fg-shadow`;"
-        "o.style.cssText=`position:absolute;z-index:21;pointer-events:none;"
+        "o.style.cssText=`position:absolute;z-index:5;pointer-events:none;"
         "background:radial-gradient(closest-side,rgba(0,0,0,.72),"
         "rgba(0,0,0,.42) 46%,rgba(0,0,0,0) 80%)`;h.appendChild(o)}"
-        "var cx=(0.5+0.02*s-dx/100)*100,"
-        "cy=(0.5+0.42*s-dy/100+0.012*s)*100,"
+        "var cx=(0.5+0.02*s-dx/100+sx/100)*100,"
+        "cy=(0.945+sy/100)*100,"
         "bw=0.190*s*100,bh=0.050*s*100;"
         "o.style.left=(cx-bw/2)+`%`;o.style.top=(cy-bh/2)+`%`;"
-        "o.style.width=bw+`%`;o.style.height=bh+`%`}"
+        "o.style.width=bw+`%`;o.style.height=bh+`%`;"
+        "var l=h.querySelector(`.bd2-fg-light`);"
+        "if(l){var m=`radial-gradient(ellipse `+(bw*0.98)+`% `+(bh*0.92)+`% at `"
+        "+cx+`% `+cy+`%,rgba(0,0,0,0) 0%,rgba(0,0,0,.28) 34%,#000 96%)`;"
+        "l.style.maskImage=m;l.style.webkitMaskImage=m}}"
         "function bd2Light(",
         "接地影",
     ),
     # 面板里拖缩放/位置不走属性下发，得挂在同一个 watcher 上
     (
         "Oi(()=>[h.roleScale,h.roleOffsetX,h.roleOffsetY],()=>{h.wallpaperMode&&(lr(),fr())})",
-        "Oi(()=>[h.roleScale,h.roleOffsetX,h.roleOffsetY],()=>{"
-        "h.wallpaperMode&&(lr(),fr()),"
-        "bd2Shadow(h.roleScale,h.roleOffsetX,h.roleOffsetY)})",
+        "Oi(()=>[h.roleScale,h.roleOffsetX,h.roleOffsetY,"
+        "h.shadowOffsetX,h.shadowOffsetY],()=>{"
+        "h.wallpaperMode&&(lr(),fr()),bd2Shadow()})",
         "接地影跟随缩放",
     ),
 ]
@@ -190,7 +210,8 @@ def normalize(js):
 
 
 def main():
-    js = normalize(BUNDLE.read_text())
+    js = (ORIG if ORIG.exists() else BUNDLE).read_text()
+    js = normalize(js)
     changed = []
     for old, new, label in PATCHES:
         if old in js:
