@@ -2,9 +2,11 @@
 
 默认与上游做轻量比对（HEAD 的 Content-Length），大小变化即重新下载，
 因此重复运行能把上游更新同步下来；--refresh 强制全部重下。
-用法: python3 tools/mirror.py [--refresh] [--limit N]
+并发提速：默认 4 线程（保守值，防上游限流），可用 --jobs N 调整（1-8）。
+用法: python3 tools/mirror.py [--refresh] [--limit N] [--jobs N]
 """
-import json, pathlib, re, sys, hashlib, urllib.request, time
+import concurrent.futures as futures
+import json, pathlib, re, sys, hashlib, threading, urllib.request, time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BUNDLE = ROOT / "tasks" / "bundle-reference.js.txt"
@@ -42,8 +44,33 @@ def fetch(cands, timeout=30):
                 time.sleep(1 + attempt)
     raise IOError(f"all failed {cands[0]}: {last}")
 
-def resolve(cands, dest, refresh):
-    """返回 (data, changed)。本地已存在且与上游同大小则复用。"""
+def sha256_file(p, chunk=1 << 20):
+    h = hashlib.sha256()
+    with open(p, "rb") as f:
+        for b in iter(lambda: f.read(chunk), b""):
+            h.update(b)
+    return h.hexdigest()
+
+
+def load_old_manifest():
+    """读旧 manifest 的 path -> (size, sha256)，命中则免读文件。"""
+    mp = ROOT / "tasks" / "manifest.json"
+    try:
+        m = json.loads(mp.read_text())
+    except Exception:
+        return {}
+    out = {}
+    for f in m.get("files", []):
+        try:
+            out[f["path"]] = (f["size"], f["sha256"])
+        except KeyError:
+            continue
+    return out
+
+
+def process_one(job, refresh, old):
+    """单个文件：复用或下载，返回 (idx, rel, size, sha256, changed, missing)。"""
+    idx, rel, dest, cands = job
     if dest.exists() and dest.stat().st_size > 0 and not refresh:
         local = dest.stat().st_size
         remote = None
@@ -52,51 +79,76 @@ def resolve(cands, dest, refresh):
             if remote is not None:
                 break
         if remote is None or remote == local:
-            return dest.read_bytes(), False
-    data, _ = fetch(cands)
+            o = old.get(rel)
+            if o and o[0] == local:
+                return idx, rel, local, o[1], False, None
+            return idx, rel, local, sha256_file(dest), False, None
+    try:
+        data, _ = fetch(cands)
+    except IOError:
+        return idx, rel, 0, "", False, rel
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(data)
-    return data, True
+    return idx, rel, len(data), hashlib.sha256(data).hexdigest(), True, None
 
 def main():
     refresh = "--refresh" in sys.argv
     limit = int(sys.argv[sys.argv.index("--limit") + 1]) if "--limit" in sys.argv else 0
+    jobs = int(sys.argv[sys.argv.index("--jobs") + 1]) if "--jobs" in sys.argv else 4
+    jobs = max(1, min(8, jobs))
     js = BUNDLE.read_text()
     spine_map, audio_map = {}, {}
     for m in re.finditer(r'"?([A-Za-z0-9_]+)"?:\{charName:[^}]*?spine:`([^`]*)`[^}]*?audio:`([^`]*)`', js):
         spine_map[m.group(1)] = m.group(2); audio_map[m.group(1)] = m.group(3)
     ids = json.loads(TASKS.read_text())
     if limit: ids = ids[:limit]
-    files, missing, total, changed = [], [], 0, 0
-    for idx, cid in enumerate(ids, 1):
+    old = load_old_manifest() if not refresh else {}
+    tasks = []
+    for cid in ids:
         spine = spine_map.get(cid, f"char{cid}")
         audio = audio_map.get(cid, "")
         for ext in ["skel", "atlas", "png"]:
             fn = f"{spine}.{ext}"
-            dest = MIRROR / "spines" / cid / fn
-            try:
-                data, was = resolve([f"{b}/spines/{cid}/{fn}" for b in BASES], dest, refresh)
-            except IOError:
-                missing.append(f"spines/{cid}/{fn}"); continue
-            changed += 1 if was else 0
-            total += len(data)
-            files.append({"path": f"spines/{cid}/{fn}", "size": len(data),
-                          "sha256": hashlib.sha256(data).hexdigest()})
+            tasks.append((len(tasks), f"spines/{cid}/{fn}",
+                          MIRROR / "spines" / cid / fn,
+                          [f"{b}/spines/{cid}/{fn}" for b in BASES]))
         if audio:
             for lang in ["JP", "KR"]:
                 for n in [1, 2, 3]:
                     fn = f"{audio}_{n}.webm"
-                    dest = MIRROR / "audios" / cid / lang / fn
-                    try:
-                        data, was = resolve([f"{b}/audios/{cid}/{lang}/{fn}" for b in BASES], dest, refresh)
-                    except IOError:
-                        missing.append(f"audios/{cid}/{lang}/{fn}"); continue
-                    changed += 1 if was else 0
-                    total += len(data)
-                    files.append({"path": f"audios/{cid}/{lang}/{fn}", "size": len(data),
-                                  "sha256": hashlib.sha256(data).hexdigest()})
-        print(f"[{idx}/{len(ids)}] {cid} total={total/1e6:.1f}MB "
-              f"updated={changed} missing={len(missing)}", flush=True)
+                    tasks.append((len(tasks), f"audios/{cid}/{lang}/{fn}",
+                                  MIRROR / "audios" / cid / lang / fn,
+                                  [f"{b}/audios/{cid}/{lang}/{fn}" for b in BASES]))
+    results = [None] * len(tasks)
+    missing, total, changed = [], 0, 0
+    done = 0
+    lock = threading.Lock()
+    def on_done(fut):
+        nonlocal done, total, changed
+        idx, rel, size, sha, was, miss = fut.result()
+        results[idx] = (rel, size, sha, was, miss)
+        with lock:
+            done += 1
+            if miss:
+                missing.append(miss)
+            else:
+                total += size
+                changed += 1 if was else 0
+            if done % 100 == 0 or done == len(tasks):
+                print(f"[{done}/{len(tasks)}] total={total/1e6:.1f}MB "
+                      f"updated={changed} missing={len(missing)}", flush=True)
+    with futures.ThreadPoolExecutor(max_workers=jobs) as ex:
+        futs = [ex.submit(process_one, t, refresh, old) for t in tasks]
+        for f in futs:
+            f.add_done_callback(on_done)
+        for f in futures.as_completed(futs):
+            f.result()
+    files = []
+    for rel, size, sha, _was, miss in results:
+        if miss:
+            continue
+        files.append({"path": rel, "size": size, "sha256": sha})
+    missing.sort()
     (ROOT / "tasks" / "manifest.json").write_text(json.dumps(
         {"characters": len(ids), "file_count": len(files), "files": files,
          "total_bytes": total,
