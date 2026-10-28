@@ -36,26 +36,9 @@ PATCHES = [
     # 背景单属性：background，图片视频都吃；前景单属性：foreground。
     # 属性下发走 bd2Apply(1)（force）：必须压过 localStorage 里的旧手选值。
     # ai 追踪上次解析出的图片值，避免值变更后旧值被当生人。
+    # 直接怼原始 bundle（不再链式改写），这样每条补丁只认 pristine 指纹，幂等好判断。
     (
-        "nb={};"
-        "var bd2Bg={img:``,dark:``,ai:``},"
-        "BD2_BG_AUTO=[`./backgrounds/bd2-parchment-2560x1440.jpg`,"
-        "`./backgrounds/bd2-starlit-vault-2560x1440.jpg`];"
-        "function bd2Dark(){try{return matchMedia(`(prefers-color-scheme: dark)`).matches}"
-        "catch(e){return!1}}"
-        "function bd2Apply(force){if(!sb)return;"
-        "var c=String(sb.customBackgroundImage||``),v=String(sb.customBackgroundVideo||``);"
-        "if(!force&&c&&BD2_BG_AUTO.indexOf(c)<0&&c!==bd2Bg.ai&&c!==bd2Bg.img&&c!==bd2Bg.dark)return;"
-        "var d=bd2Dark(),"
-        "w=d?(bd2Bg.dark||bd2Bg.img||BD2_BG_AUTO[1]):(bd2Bg.img||BD2_BG_AUTO[0]);"
-        "if(/\\.(webm|mp4)(\\?.*)?$/i.test(w)){"
-        "if(v!==w)sb.customBackgroundVideo=w;"
-        "if(c)sb.customBackgroundImage=``}"
-        "else{bd2Bg.ai=w;if(w!==c)sb.customBackgroundImage=w;"
-        "if(v)sb.customBackgroundVideo=``}"
-        "try{ib()}catch(e){}}"
-        "try{matchMedia(`(prefers-color-scheme: dark)`).addEventListener(`change`,bd2Apply)}"
-        "catch(e){}function rb(e){",
+        "nb={bgImage:`customBackgroundImage`};function rb(e){",
         "nb={};"
         "var bd2Bg={img:``,ai:``};var bd2Fg={img:``};"
         "var BD2_BG_AUTO=`./backgrounds/bd2-starlit-vault-2560x1440.jpg`;"
@@ -69,7 +52,7 @@ PATCHES = [
         "else{bd2Bg.ai=w;if(w!==c)sb.customBackgroundImage=w;"
         "if(v)sb.customBackgroundVideo=``}"
         "try{ib()}catch(e){}}"
-        "function bd2FgApply(){if(!sb)return;"
+        "function bd2FgApply(force){if(!sb)return;"
         "var w=bd2Fg.img||``;"
         "var c=String(sb.customForegroundImage||``),"
         "v=String(sb.customForegroundVideo||``);"
@@ -80,16 +63,17 @@ PATCHES = [
         "if(v)sb.customForegroundVideo=``}"
         "try{ib()}catch(e){}}"
         "function rb(e){",
-        "单背景+前景槽位",
+        "背景/前景槽位",
     ),
     (
-        "if(n==`background`||n==`background_dark`){"
-        "bd2Bg[n==`background`?`img`:`dark`]=rb(String(t??``)),"
-        "window.__bd2BgLive=!0,bd2Apply(1);continue}",
-        "if(n==`background`){"
+        "if(nb[n]){e[nb[n]]=rb(String(t??``));continue}",
+        "if(n==`background`||n==`foreground`){"
+        "if(n==`foreground`){"
+        "bd2Fg.img=rb(String(t??``)),"
+        "window.__bd2BgLive=!0,bd2FgApply(1)}else{"
         "bd2Bg.img=rb(String(t??``)),"
-        "window.__bd2BgLive=!0,bd2Apply(1);continue}",
-        "单背景属性",
+        "window.__bd2BgLive=!0,bd2Apply(1)}continue}",
+        "背景/前景属性",
     ),
     # 独立状态位 customBackgroundVideo（不复用图片位，避免 <img>
     # 误加载 webm 触发 onerror 把背景自清）。前景同理走 customForegroundVideo。
@@ -127,18 +111,6 @@ PATCHES = [
         "前景状态位",
     ),
     (
-        "if(n==`background`){"
-        "bd2Bg.img=rb(String(t??``)),"
-        "window.__bd2BgLive=!0,bd2Apply(1);continue}",
-        "if(n==`background`||n==`foreground`){"
-        "if(n==`foreground`){"
-        "bd2Fg.img=rb(String(t??``)),"
-        "window.__bd2BgLive=!0,bd2FgApply()}else{"
-        "bd2Bg.img=rb(String(t??``)),"
-        "window.__bd2BgLive=!0,bd2Apply(1)}continue}",
-        "前景属性接线",
-    ),
-    (
         "}catch(e){}}}var ab={",
         "}catch(e){}}}function bd2Light(h,img,vid){"
         "if(!h)return;"
@@ -163,13 +135,62 @@ PATCHES = [
         "v=String(e.customBackgroundVideo??``);bd2Video(r,v);"
         "try{var _h=r.parentElement||r.parentNode,"
         "_fi=String(e.customForegroundImage??``),"
-        "_fv=String(e.customForegroundVideo??``);bd2Light(_h,_fi,_fv)}catch(_e){}",
+        "_fv=String(e.customForegroundVideo??``);bd2Light(_h,_fi,_fv);"
+        "bd2Shadow(sb&&sb.roleScale,sb&&sb.roleOffsetX,sb&&sb.roleOffsetY)}"
+        "catch(_e){}",
         "前景应用",
+    ),
+    # 接地影：screen 灯光层只能加亮，画不出影子，所以单独一层压在角色下面。
+    # 几何来自实测（1920x1080，脚底随缩放绕画面中心走）：
+    #   中心 x = 0.5 + 0.02*scale - offsetX/100
+    #   脚底 y = 0.5 + 0.42*scale - offsetY/100
+    #   脚部宽度 ~ 0.145*scale
+    # offset 的符号与直觉相反：正的 offsetX 让画面左移、正的 offsetY 让画面下移。
+    (
+        "}catch(e){}}}function bd2Light(",
+        "}catch(e){}}}function bd2Shadow(sc,ox,oy){"
+        "var h=document.querySelector(`.bd2-bg-layer`);"
+        "if(!h)return;h=h.parentElement;if(!h)return;"
+        "var s=Number(sc);if(!Number.isFinite(s)||s<=0)s=1;"
+        "var dx=Number(ox)||0,dy=Number(oy)||0;"
+        "var o=h.querySelector(`.bd2-fg-shadow`);"
+        "if(!o){o=document.createElement(`div`);o.className=`bd2-fg-shadow`;"
+        "o.style.cssText=`position:absolute;z-index:21;pointer-events:none;"
+        "background:radial-gradient(closest-side,rgba(0,0,0,.72),"
+        "rgba(0,0,0,.42) 46%,rgba(0,0,0,0) 80%)`;h.appendChild(o)}"
+        "var cx=(0.5+0.02*s-dx/100)*100,"
+        "cy=(0.5+0.42*s-dy/100+0.012*s)*100,"
+        "bw=0.190*s*100,bh=0.050*s*100;"
+        "o.style.left=(cx-bw/2)+`%`;o.style.top=(cy-bh/2)+`%`;"
+        "o.style.width=bw+`%`;o.style.height=bh+`%`}"
+        "function bd2Light(",
+        "接地影",
+    ),
+    # 面板里拖缩放/位置不走属性下发，得挂在同一个 watcher 上
+    (
+        "Oi(()=>[h.roleScale,h.roleOffsetX,h.roleOffsetY],()=>{h.wallpaperMode&&(lr(),fr())})",
+        "Oi(()=>[h.roleScale,h.roleOffsetX,h.roleOffsetY],()=>{"
+        "h.wallpaperMode&&(lr(),fr()),"
+        "bd2Shadow(h.roleScale,h.roleOffsetX,h.roleOffsetY)})",
+        "接地影跟随缩放",
     ),
 ]
 
+def normalize(js):
+    """先把本脚本打过的补丁按反序撤回，得到 pristine。
+
+    bundle 是 gitignore 的构建产物，没有 pristine 副本可拿；如果不先归一化，
+    链式补丁在“已打过补丁”的文件上会因为中间态被后续补丁改写而认不出指纹。
+    撤回是幂等的：没打过就跳过。
+    """
+    for old, new, _label in reversed(PATCHES):
+        if js.count(new) == 1:
+            js = js.replace(new, old)
+    return js
+
+
 def main():
-    js = BUNDLE.read_text()
+    js = normalize(BUNDLE.read_text())
     changed = []
     for old, new, label in PATCHES:
         if old in js:

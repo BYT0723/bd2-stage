@@ -47,6 +47,12 @@ def test_bundle_patched():
     assert "foreground_dark" not in props, "旧 foreground_dark 未移除"
     for p in sorted((ROOT / "backgrounds").glob("bd2-light-*-2560x1440.jpg")):
         assert p.stat().st_size < 1024 * 1024, f"{p.name} 超 1MB"
+    assert "bd2-fg-shadow" in js, "接地影层未注入"
+    assert "bd2Shadow(" in js, "接地影函数未注入"
+    assert "bd2Shadow(h.roleScale,h.roleOffsetX,h.roleOffsetY)" in js, "接地影没跟随面板缩放/位移"
+    assert "bd2Shadow(sb&&sb.roleScale" in js, "接地影没跟随属性下发"
+    assert "z-index:21" in js, "接地影必须在灯光层之上（否则被 screen 光池洗掉）"
+    assert "radial-gradient(closest-side,rgba(0,0,0,.72)" in js, "接地影渐变未注入"
 
 def test_audio_patch_fingerprint():
     ref = (ROOT / "tasks" / "bundle-reference.js.txt").read_text()
