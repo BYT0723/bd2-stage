@@ -19,7 +19,7 @@
 				"order": 101,
 				"text": "水平位置 % (Horizontal)",
 				"type": "slider",
-				"value": 0
+				"value": 5
 			},
 			"roleOffsetY": {
 				"fraction": false,
@@ -29,7 +29,7 @@
 				"order": 102,
 				"text": "垂直位置 % (Vertical)",
 				"type": "slider",
-				"value": 0
+				"value": -5
 			},
 			"roleScale": {
 				"fraction": false,
@@ -39,7 +39,7 @@
 				"order": 100,
 				"text": "角色缩放 % (Character Scale)",
 				"type": "slider",
-				"value": 100
+				"value": 80
 			},
 			"schemecolor": {
 				"order": 0,
@@ -97,14 +97,14 @@
 				"order": 112,
 				"text": "背景 Background（图片或视频）",
 				"type": "file",
-				"value": ""
+				"value": "./backgrounds/bd2-spotlight-fest-2560x1440.jpg"
 			},
 			"foreground": {
 				"index": 14,
 				"order": 114,
 				"text": "灯光效果 Foreground light（黑底screen叠加；图片或视频；空=关闭）",
 				"type": "file",
-				"value": ""
+				"value": "./backgrounds/bd2-light-frost-2560x1440.jpg"
 			},
 			"shadowOffsetX": {
 				"fraction": false,
@@ -114,7 +114,7 @@
 				"order": 115,
 				"text": "阴影水平偏移 % (Shadow horizontal)",
 				"type": "slider",
-				"value": 0
+				"value": -1
 			},
 			"shadowOffsetY": {
 				"fraction": false,
@@ -124,7 +124,7 @@
 				"order": 116,
 				"text": "阴影垂直偏移 % (Shadow vertical)",
 				"type": "slider",
-				"value": 0
+				"value": -4
 			}
 		}
 	},
