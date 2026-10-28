@@ -110,27 +110,35 @@ PATCHES = [
         "customBackgroundImage:null,customBackgroundVideo:null,layerNames:[]",
         "customBackgroundImage:null,customBackgroundVideo:null,"
         "customForegroundImage:null,customForegroundVideo:null,"
-        "shadowOffsetX:0,shadowOffsetY:0,layerNames:[]",
+        "shadowOffsetX:0,shadowOffsetY:0,foregroundOpacity:.45,layerNames:[]",
         "前景状态位",
     ),
-    # 接地影的位移滑块：走 tb 映射（!1 = 原值，不做 /100）
+    # 接地影的位移滑块：走 tb 映射（!1 = 原值，不做 /100）；
+    # 灯光强度走 volume 同款 !0（0-100 → 0-1），store 里直接是 opacity 值
     (
         "panelOpacity:[`panelOpacity`,!0]},nb={}",
         "panelOpacity:[`panelOpacity`,!0],"
         "shadowOffsetX:[`shadowOffsetX`,!1],"
-        "shadowOffsetY:[`shadowOffsetY`,!1]},nb={}",
+        "shadowOffsetY:[`shadowOffsetY`,!1],"
+        "foregroundOpacity:[`foregroundOpacity`,!0]},nb={}",
         "接地影位移属性",
     ),
     (
         "}catch(e){}}}var ab={",
-        "}catch(e){}}}function bd2Light(h,img,vid){"
+        "}catch(e){}}}function bd2LightOp(){"
+        "try{var l=document.querySelector(`.bd2-fg-light`);"
+        "if(!l)return;var v=sb&&sb.foregroundOpacity;"
+        "v=Number(v);if(!Number.isFinite(v))v=.45;"
+        "v=Math.max(0,Math.min(1,v));l.style.opacity=v.toFixed(2)}catch(e){}}"
+        "function bd2Light(h,img,vid){"
         "if(!h)return;"
         "var o=h.querySelector(`.bd2-fg-light`);"
         "if(!img&&!vid){if(o){try{var q=o.querySelector(`video`);q&&q.pause()}"
         "catch(e){}o.remove()}return}"
         "if(!o){o=document.createElement(`div`);o.className=`bd2-fg-light`;"
         "o.style.cssText=`position:absolute;inset:0;z-index:20;pointer-events:none;"
-        "mix-blend-mode:screen;opacity:.6;overflow:hidden`;h.appendChild(o)}"
+        "mix-blend-mode:screen;opacity:.45;overflow:hidden`;h.appendChild(o)}"
+        "bd2LightOp();"
         "bd2Video(o,vid);"
         "var cur=o.getAttribute(`data-img`)||``;"
         "if((img||``)!==cur){if(img){"
@@ -161,8 +169,8 @@ PATCHES = [
     #   shadowOffsetX/Y 是属性面板里的相对微调，单位是画面百分比
     # offset 的符号与直觉相反：正的 roleOffsetX 让画面左移、正的 roleOffsetY 让画面下移。
     (
-        "}catch(e){}}}function bd2Light(",
-        "}catch(e){}}}function bd2Shadow(){"
+        "}catch(e){}}function bd2Light(",
+        "}catch(e){}}function bd2Shadow(){"
         "var bg=document.querySelector(`.bd2-bg-layer`);if(!bg)return;"
         "var h=bg.parentElement;if(!h)return;"
         "var st=sb||{},s=Number(st.roleScale);"
@@ -186,12 +194,12 @@ PATCHES = [
         "function bd2Light(",
         "接地影",
     ),
-    # 面板里拖缩放/位置不走属性下发，得挂在同一个 watcher 上
+    # 面板里拖缩放/位置不走属性下发，得挂在同一个 watcher 上；灯光强度同理实时调 opacity
     (
         "Oi(()=>[h.roleScale,h.roleOffsetX,h.roleOffsetY],()=>{h.wallpaperMode&&(lr(),fr())})",
         "Oi(()=>[h.roleScale,h.roleOffsetX,h.roleOffsetY,"
-        "h.shadowOffsetX,h.shadowOffsetY],()=>{"
-        "h.wallpaperMode&&(lr(),fr()),bd2Shadow()})",
+        "h.shadowOffsetX,h.shadowOffsetY,h.foregroundOpacity],()=>{"
+        "h.wallpaperMode&&(lr(),fr()),bd2Shadow(),bd2LightOp()})",
         "接地影跟随缩放",
     ),
 ]

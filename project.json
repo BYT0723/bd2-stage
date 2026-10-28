@@ -125,6 +125,16 @@
 				"text": "阴影垂直偏移 % (Shadow vertical)",
 				"type": "slider",
 				"value": -4
+			},
+			"foregroundOpacity": {
+				"fraction": false,
+				"index": 17,
+				"max": 100,
+				"min": 0,
+				"order": 117,
+				"text": "灯光强度 % (Foreground opacity)",
+				"type": "slider",
+				"value": 45
 			}
 		}
 	},
