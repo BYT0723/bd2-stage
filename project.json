@@ -95,14 +95,14 @@
 			"background": {
 				"index": 12,
 				"order": 112,
-				"text": "背景 Background（图片或视频；深色模式未单独设时通用）",
+				"text": "背景 Background（图片或视频）",
 				"type": "file",
 				"value": ""
 			},
-			"background_dark": {
-				"index": 13,
-				"order": 113,
-				"text": "深色背景 Dark background（图片或视频；留空跟通用）",
+			"foreground": {
+				"index": 14,
+				"order": 114,
+				"text": "灯光效果 Foreground light（黑底screen叠加；图片或视频；空=关闭）",
 				"type": "file",
 				"value": ""
 			}

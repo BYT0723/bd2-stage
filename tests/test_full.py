@@ -19,19 +19,34 @@ def test_bundle_patched():
     assert "bd2AudioPool" in js, "语音元素未复用（换人次数一多会堆积 Audio）"
     assert "t.preload=`none`" in js, "语音应在点击时才加载"
     assert "t.onerror=()=>" in js, "复用元素必须覆盖监听器，不能 addEventListener 叠加"
-    assert "background_dark" in js, "深浅背景属性未接线"
-    assert "bd2Bg.ai" in js, "属性变更死锁守卫未注入"
+    assert "bd2Bg.img=rb(String(t??``))" in js, "背景属性未接线"
+    assert "bd2Fg.img=rb(String(t??``))" in js, "前景属性未接线"
     assert "bd2Apply(1)" in js, "属性下发必须 force（否则被旧手选值拦死）"
     props = json.loads((ROOT / "project.json").read_text())["general"]["properties"]
     for name, p in props.items():
         if p.get("type") == "file" and name.startswith("background"):
             assert name in js, f"背景属性 {name} 在 bundle 里没接线（改名必死）"
     assert "BD2_BG_AUTO" in js, "背景默认值未注入"
+    assert "var BD2_BG_AUTO" in js, "BD2_BG_AUTO 必须用 var 声明（漏写会在模块严格模式下 ReferenceError 白屏）"
     assert "bgImageLight" not in js, "旧图片属性未移除"
     assert "bgVideo" not in js, "旧视频属性未移除（customBackgroundVideo 除外）"
     assert "customBackgroundVideo" in js, "视频背景状态位未注入"
-    assert "prefers-color-scheme: dark" in js, "背景必须跟随系统配色"
     assert "bd2Video(" in js, "视频背景 applier 未注入"
+    assert "background_dark" not in js, "旧深色背景属性未移除"
+    assert "foreground_dark" not in js, "旧深色前景属性未移除"
+    assert "bd2Dark" not in js, "深色跟随逻辑未移除"
+    assert "bd2Fg" in js, "前景槽位未注入"
+    assert "bd2Light(" in js, "前景渲染未注入"
+    assert "bd2FgApply" in js, "前景 applier 未注入"
+    assert "mix-blend-mode:screen" in js, "前景必须 screen 混合"
+    assert "opacity:.6" in js, "前景必须降亮度（过曝修复）"
+    assert "customForegroundVideo" in js, "前景视频状态位未注入"
+    assert "foreground" in props and props["foreground"].get("type") == "file", "前景属性缺失"
+    assert "foreground" in js, "前景属性在 bundle 里没接线"
+    assert "background_dark" not in props, "旧 background_dark 未移除"
+    assert "foreground_dark" not in props, "旧 foreground_dark 未移除"
+    for p in sorted((ROOT / "backgrounds").glob("bd2-light-*-2560x1440.jpg")):
+        assert p.stat().st_size < 1024 * 1024, f"{p.name} 超 1MB"
 
 def test_audio_patch_fingerprint():
     ref = (ROOT / "tasks" / "bundle-reference.js.txt").read_text()
