@@ -206,6 +206,8 @@ PATCHES = [
     # 日本語/한국어 seg（复用 wc-seg 主题高亮），点击走 bd2Voice → setAudioLanguage。
     # 复用同一 store + 现有 watcher（Oi(()=>g.audioLanguage,Vn)）重载语音，
     # SettingsModal 与面板自动同步；默认 JP 不动（Bs 不改）。
+    # seg 自带 bd2-voice-seg 标记：外挂 curLang 若按全局 .wc-seg__btn 索引判语言，
+    # 不排除该组会错位（语音 KR→误判 UI 日语），见 custom/bd2-fav-random.js。
     (
         "}}}var Us=Ss(",
         "}}}function bd2Voice(l){try{Us().setAudioLanguage(l)}catch(e){}}var Us=Ss(",
@@ -219,7 +221,7 @@ PATCHES = [
     (
         "]])]),V(t).loadError?(H(),U(`div`,ty,",
         "]])]),W(`div`,{class:`wc-row`},[W(`div`,{class:`wc-row__label`},"
-        "[W(`span`,null,`语音 (Voice)`,1)]),W(`div`,{class:`wc-seg`,role:`group`,"
+        "[W(`span`,null,`语音 (Voice)`,1)]),W(`div`,{class:`wc-seg bd2-voice-seg`,role:`group`,"
         "\"aria-label\":`voice language`},[(H(!0),U(Wi,null,Cr([{v:`JP`,l:`日本語`},"
         "{v:`KR`,l:`한국어`}],e=>(H(),U(`button`,{key:e.v,type:`button`,"
         "class:me([`wc-seg__btn`,{\"wc-seg__btn--active\":V(bd2vs).audioLanguage===e.v}]),"

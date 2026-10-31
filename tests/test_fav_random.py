@@ -66,6 +66,10 @@ def test_inject_script():
     assert "pageNums" in s and r"(\d+)\D+(\d+)" in s, "页码解析必须兼容 第a/b页 · a/b ページ · Page a of b"
     assert "syncListTo" in s, "随机后必须定位到该角色所在页"
     assert "scrollIntoView" in s, "跳页后列表必须滚进可视区"
+    # 回归：语音补丁新增 JP/KR seg 组（排在语言组前面）后，全局 .wc-seg__btn
+    # 索引会错位（语音 KR→误判 ja）。curLang 必须只认 3 段的角色名语言组。
+    assert "querySelectorAll(SEL.seg)" not in s, "curLang 不能全局查 .wc-seg__btn（语音 seg 会错位索引）"
+    assert "bd2-voice-seg" in s, "curLang 必须排除语音 seg 组"
 
 def test_logo_removed():
     import json

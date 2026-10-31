@@ -75,6 +75,9 @@ def test_voice_panel():
     # 数组包裸字符串（},[Se(...)]）在 block 收集路径下渲染为空按钮（2026-11-01 实测）。
     assert "},[Se(e.l)]" not in js, "语音按钮用了数组包裸字符串，渲染为空（改走 Se 直传）"
     assert "Se(e.l),11,oy" in js, "语音按钮没走 Se 直传 + 11,oy 形态"
+    # 回归：语音 seg 与角色名语言 seg 同类名，外挂 curLang 靠全局索引判语言会错位
+    # （语音 KR→误判 ja）。语音 seg 必须带可排除标记。
+    assert "bd2-voice-seg" in js, "语音 seg 缺 bd2-voice-seg 标记（make patch）"
 
 
 def test_voice_property():
