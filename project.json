@@ -135,6 +135,23 @@
 				"text": "灯光强度 % (Foreground opacity)",
 				"type": "slider",
 				"value": 45
+			},
+			"audioLanguage": {
+				"index": 18,
+				"options": [
+					{
+						"label": "日本語",
+						"value": "JP"
+					},
+					{
+						"label": "한국어",
+						"value": "KR"
+					}
+				],
+				"order": 118,
+				"text": "语音语言 (Voice Language)",
+				"type": "combo",
+				"value": "JP"
 			}
 		}
 	},

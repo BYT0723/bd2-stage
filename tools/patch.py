@@ -202,6 +202,42 @@ PATCHES = [
         "h.wallpaperMode&&(lr(),fr()),bd2Shadow(),bd2LightOp()})",
         "接地影跟随缩放",
     ),
+    # 控制面板语音切换：setup 里取 settingsStore（bd2vs），音量行下方插入
+    # 日本語/한국어 seg（复用 wc-seg 主题高亮），点击走 bd2Voice → setAudioLanguage。
+    # 复用同一 store + 现有 watcher（Oi(()=>g.audioLanguage,Vn)）重载语音，
+    # SettingsModal 与面板自动同步；默认 JP 不动（Bs 不改）。
+    (
+        "}}}var Us=Ss(",
+        "}}}function bd2Voice(l){try{Us().setAudioLanguage(l)}catch(e){}}var Us=Ss(",
+        "语音切换 helper",
+    ),
+    (
+        "setup(e){let t=Es(),n=`full`",
+        "setup(e){let t=Es(),bd2vs=Us(),n=`full`",
+        "面板取语音 store",
+    ),
+    (
+        "]])]),V(t).loadError?(H(),U(`div`,ty,",
+        "]])]),W(`div`,{class:`wc-row`},[W(`div`,{class:`wc-row__label`},"
+        "[W(`span`,null,`语音 (Voice)`,1)]),W(`div`,{class:`wc-seg`,role:`group`,"
+        "\"aria-label\":`voice language`},[(H(!0),U(Wi,null,Cr([{v:`JP`,l:`日本語`},"
+        "{v:`KR`,l:`한국어`}],e=>(H(),U(`button`,{key:e.v,type:`button`,"
+        "class:me([`wc-seg__btn`,{\"wc-seg__btn--active\":V(bd2vs).audioLanguage===e.v}]),"
+        "onClick:()=>bd2Voice(e.v)},Se(e.l),11,oy))),128))])]),"
+        "V(t).loadError?(H(),U(`div`,ty,",
+        "面板语音行",
+    ),
+    # WE 属性语音语言：fb() 里归一化下发值（JP/0→JP，KR/1→KR，大小写不敏感，
+    # 非法值忽略），复用 bd2Voice() 写同一 store，与面板双入口同步。
+    # WE 每次加载会下发它记住的值（WE-wins on load，与音量等现有属性一致）。
+    (
+        "for(let[n,r]of Object.entries(t)){let t=r&&typeof r==`object`&&`value`in r?r.value:r;if(tb[n])",
+        "for(let[n,r]of Object.entries(t)){let t=r&&typeof r==`object`&&`value`in r?r.value:r;"
+        "if(n==`audioLanguage`){var _l=String(t??``).toUpperCase();"
+        "if(_l===`JP`||_l===`0`)bd2Voice(`JP`);"
+        "else if(_l===`KR`||_l===`1`)bd2Voice(`KR`);continue}if(tb[n])",
+        "WE 语音属性接线",
+    ),
 ]
 
 def normalize(js):

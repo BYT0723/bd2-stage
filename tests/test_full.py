@@ -66,6 +66,31 @@ def test_bundle_patched():
         assert name in props and props[name].get("type") == "slider", f"{name} 属性缺失"
         assert name in js, f"{name} 在 bundle 里没接线"
 
+def test_voice_panel():
+    js = (ASSETS / "index-Dsqno3tX.js").read_text()
+    assert "bd2Voice" in js, "控制面板语音接线未注入（make patch）"
+    assert "日本語" in js and "한국어" in js, "面板语音文案缺失（make patch）"
+    assert js.count("bd2Voice(") >= 2, "面板 JP/KR 两档都没接上 setAudioLanguage"
+    # 回归：语音按钮文本必须是 Se(...) 直传 + 11,oy（nameLang 同款），
+    # 数组包裸字符串（},[Se(...)]）在 block 收集路径下渲染为空按钮（2026-11-01 实测）。
+    assert "},[Se(e.l)]" not in js, "语音按钮用了数组包裸字符串，渲染为空（改走 Se 直传）"
+    assert "Se(e.l),11,oy" in js, "语音按钮没走 Se 直传 + 11,oy 形态"
+
+
+def test_voice_property():
+    import json
+    props = json.loads((ROOT / "project.json").read_text())["general"]["properties"]
+    assert "audioLanguage" in props, "WE 语音属性缺失（project.json）"
+    p = props["audioLanguage"]
+    assert p.get("type") == "combo", "语音属性必须是 combo 下拉"
+    vals = [o.get("value") for o in p.get("options", [])]
+    assert "JP" in vals and "KR" in vals, "combo 选项必须含 JP/KR"
+    assert p.get("value") in ("JP", "0"), "combo 默认必须是 JP（首项）"
+    js = (ASSETS / "index-Dsqno3tX.js").read_text()
+    assert "n==`audioLanguage`" in js, "fb() 没接 audioLanguage 属性（make patch）"
+    assert "bd2Voice(`JP`)" in js and "bd2Voice(`KR`)" in js, "fb() 归一化没调 bd2Voice"
+
+
 def test_audio_patch_fingerprint():
     ref = (ROOT / "tasks" / "bundle-reference.js.txt").read_text()
     assert "t.preload=`auto`" in ref, "原始 bundle 指纹变化，需复核语音补丁点"
