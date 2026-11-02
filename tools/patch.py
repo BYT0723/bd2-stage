@@ -110,7 +110,7 @@ PATCHES = [
         "customBackgroundImage:null,customBackgroundVideo:null,layerNames:[]",
         "customBackgroundImage:null,customBackgroundVideo:null,"
         "customForegroundImage:null,customForegroundVideo:null,"
-        "shadowOffsetX:0,shadowOffsetY:0,foregroundOpacity:.45,layerNames:[]",
+        "shadowOffsetX:0,shadowOffsetY:0,shadowScale:100,foregroundOpacity:.45,layerNames:[]",
         "前景状态位",
     ),
     # 接地影的位移滑块：走 tb 映射（!1 = 原值，不做 /100）；
@@ -120,6 +120,7 @@ PATCHES = [
         "panelOpacity:[`panelOpacity`,!0],"
         "shadowOffsetX:[`shadowOffsetX`,!1],"
         "shadowOffsetY:[`shadowOffsetY`,!1],"
+        "shadowScale:[`shadowScale`,!1],"
         "foregroundOpacity:[`foregroundOpacity`,!0]},nb={}",
         "接地影位移属性",
     ),
@@ -177,6 +178,8 @@ PATCHES = [
         "if(!Number.isFinite(s)||s<=0)s=1;"
         "var dx=Number(st.roleOffsetX)||0,dy=Number(st.roleOffsetY)||0,"
         "sx=Number(st.shadowOffsetX)||0,sy=Number(st.shadowOffsetY)||0;"
+        "var sc=Number(st.shadowScale);if(!Number.isFinite(sc))sc=100;"
+        "sc=Math.max(0,Math.min(2,sc/100));"
         "var o=h.querySelector(`.bd2-fg-shadow`);"
         "if(!o){o=document.createElement(`div`);o.className=`bd2-fg-shadow`;"
         "o.style.cssText=`position:absolute;z-index:5;pointer-events:none;"
@@ -184,7 +187,7 @@ PATCHES = [
         "rgba(0,0,0,.40) 40%,rgba(0,0,0,0) 86%)`;h.appendChild(o)}"
         "var cx=(0.5+0.02*s-dx/100+sx/100)*100,"
         "cy=(0.945+sy/100)*100,"
-        "bw=0.235*s*100,bh=0.062*s*100;"
+        "bw=0.235*s*sc*100,bh=0.062*s*sc*100;"
         "o.style.left=(cx-bw/2)+`%`;o.style.top=(cy-bh/2)+`%`;"
         "o.style.width=bw+`%`;o.style.height=bh+`%`;"
         "var l=h.querySelector(`.bd2-fg-light`);"
@@ -198,7 +201,7 @@ PATCHES = [
     (
         "Oi(()=>[h.roleScale,h.roleOffsetX,h.roleOffsetY],()=>{h.wallpaperMode&&(lr(),fr())})",
         "Oi(()=>[h.roleScale,h.roleOffsetX,h.roleOffsetY,"
-        "h.shadowOffsetX,h.shadowOffsetY,h.foregroundOpacity],()=>{"
+        "h.shadowOffsetX,h.shadowOffsetY,h.shadowScale,h.foregroundOpacity],()=>{"
         "h.wallpaperMode&&(lr(),fr()),bd2Shadow(),bd2LightOp()})",
         "接地影跟随缩放",
     ),
@@ -249,6 +252,36 @@ def normalize(js):
     链式补丁在“已打过补丁”的文件上会因为中间态被后续补丁改写而认不出指纹。
     撤回是幂等的：没打过就跳过。
     """
+    # 兼容旧版补丁（无 shadowScale）：先把旧 new 片段迁移成当前 new，
+    # 再走正常归一化。旧工作区 bundle 是已打过旧补丁的，没有这步会 FAIL。
+    migrations = [
+        (
+            "shadowOffsetX:0,shadowOffsetY:0,foregroundOpacity:.45,layerNames:[]",
+            "shadowOffsetX:0,shadowOffsetY:0,shadowScale:100,foregroundOpacity:.45,layerNames:[]",
+        ),
+        (
+            "shadowOffsetY:[`shadowOffsetY`,!1],foregroundOpacity:[`foregroundOpacity`,!0]}",
+            "shadowOffsetY:[`shadowOffsetY`,!1],shadowScale:[`shadowScale`,!1],"
+            "foregroundOpacity:[`foregroundOpacity`,!0]}",
+        ),
+        (
+            "sx=Number(st.shadowOffsetX)||0,sy=Number(st.shadowOffsetY)||0;var o=",
+            "sx=Number(st.shadowOffsetX)||0,sy=Number(st.shadowOffsetY)||0;"
+            "var sc=Number(st.shadowScale);if(!Number.isFinite(sc))sc=100;"
+            "sc=Math.max(0,Math.min(2,sc/100));var o=",
+        ),
+        (
+            "bw=0.235*s*100,bh=0.062*s*100;",
+            "bw=0.235*s*sc*100,bh=0.062*s*sc*100;",
+        ),
+        (
+            "h.shadowOffsetX,h.shadowOffsetY,h.foregroundOpacity",
+            "h.shadowOffsetX,h.shadowOffsetY,h.shadowScale,h.foregroundOpacity",
+        ),
+    ]
+    for legacy, current in migrations:
+        if legacy in js and current not in js:
+            js = js.replace(legacy, current)
     for old, new, _label in reversed(PATCHES):
         if js.count(new) == 1:
             js = js.replace(new, old)

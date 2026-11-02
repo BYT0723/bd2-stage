@@ -11,7 +11,7 @@ WT=~/Workspace/Worktrees/<新 worktree 名>       # 新 worktree 目录
 mkdir -p "$WT/assets"
 cp -al "$MAIN"/assets/spines "$WT"/assets/spines
 cp -al "$MAIN"/assets/audios "$WT"/assets/audios
-cp "$MAIN"/assets/bd2-data.js "$MAIN"/assets/index-Dsqno3tX.js "$MAIN"/assets/index-CqczJBgX.css \
+cp "$MAIN"/assets/bd2-data.js "$MAIN"/assets/index-*.js "$MAIN"/assets/index-*.css \
    "$MAIN"/assets/*.png "$MAIN"/assets/*.atlas "$WT"/assets/
 cp "$MAIN"/favicon.ico "$MAIN"/preview.gif "$WT"/
 cd "$WT" && python3 tools/stamp.py && python3 tools/verify.py

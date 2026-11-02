@@ -57,7 +57,9 @@ def test_bundle_patched():
         assert p.stat().st_size < 1024 * 1024, f"{p.name} 超 1MB"
     assert "bd2-fg-shadow" in js, "接地影层未注入"
     assert "bd2Shadow(" in js, "接地影函数未注入"
-    assert "h.shadowOffsetX,h.shadowOffsetY" in js, "接地影没跟随位移属性"
+    assert "h.shadowOffsetX,h.shadowOffsetY,h.shadowScale" in js, "接地影没跟随位移/大小属性"
+    assert "st.shadowScale" in js, "接地影没读 shadowScale（尺寸系数未接线）"
+    assert "shadowScale:[`shadowScale`,!1]" in js, "阴影大小 tb 映射未注入"
     assert "bd2Shadow(),bd2LightOp()})" in js, "接地影/灯光强度没跟上 watcher"
     assert "z-index:5" in js, "接地影必须在背景之上、人物之下（z-index:5）"
     assert "radial-gradient(closest-side,rgba(0,0,0,.75)" in js, "接地影渐变未注入"
@@ -65,6 +67,9 @@ def test_bundle_patched():
     for name in ("shadowOffsetX", "shadowOffsetY"):
         assert name in props and props[name].get("type") == "slider", f"{name} 属性缺失"
         assert name in js, f"{name} 在 bundle 里没接线"
+    assert "shadowScale" in props and props["shadowScale"].get("type") == "slider", "shadowScale 属性缺失"
+    assert props["shadowScale"].get("value") == 100, "阴影大小默认必须是 100"
+    assert props["shadowScale"].get("min") == 0 and props["shadowScale"].get("max") == 200, "阴影大小范围必须是 0-200"
 
 def test_voice_panel():
     js = (ASSETS / "index-Dsqno3tX.js").read_text()

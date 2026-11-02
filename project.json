@@ -152,6 +152,16 @@
 				"text": "语音语言 (Voice Language)",
 				"type": "combo",
 				"value": "JP"
+			},
+			"shadowScale": {
+				"fraction": false,
+				"index": 19,
+				"max": 200,
+				"min": 0,
+				"order": 119,
+				"text": "阴影大小 % (Shadow size)",
+				"type": "slider",
+				"value": 100
 			}
 		}
 	},

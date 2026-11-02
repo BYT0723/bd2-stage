@@ -32,7 +32,7 @@ X 跟人物走，Y 锚地面线——不跟人物脚底走。原因：不同角�
 ```text
 中心 x = 0.5 + 0.02*scale - roleOffsetX/100 + shadowOffsetX/100
 中心 y = 0.945 + shadowOffsetY/100        # 0.945 = 背景光池那条地面线
-宽 0.235*scale，高 0.062*scale
+宽 0.235*scale*sc，高 0.062*scale*sc    # sc = shadowScale/100，默认 100 → sc=1
 ```
 
 实测：缩放绕画面中心（scale 0.75 → 人物中心 0.515，1.00 → 0.519）；

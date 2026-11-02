@@ -52,6 +52,11 @@ def main():
         assert mm, f"{name} 缺版本号"
         assert mm.group(1) == sha256(ASSETS / name)[:10], f"{name} 版本号与内容不一致"
 
+    # index.html 引用的本地产物必须都在（新 worktree 自举漏拷 css/js 会白屏/无样式，
+    # 2026-11-02 实测：缺 index-*.css 即人物消失 + 出滚动条，且 smoke 拦不住）
+    for ref in re.findall(r'"\./assets/([^"?]+)', html):
+        assert (ASSETS / ref).exists(), f"index.html 引用的 {ref} 缺失（新 worktree 先按 AGENTS.md 自举素材）"
+
     print(f"VERIFY OK files={m.get('file_count', len(m['files']))} "
           f"total={m['total_bytes']/1e6:.1f}MB")
     return 0
