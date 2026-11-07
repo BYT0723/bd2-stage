@@ -41,13 +41,15 @@ def main():
     assert "bd2AudioPool" in js, "bundle 缺少语音池补丁（make patch）"
     assert "t.preload=`none`" in js, "bundle 语音仍会预加载（make patch）"
     assert "t.onerror=()=>" in js, "bundle 复用语音元素时监听器会叠加（make patch）"
+    assert "window.__bd2CarouselSwap" in js, "bundle 缺换人转盘出场钩子（make patch）"
+    assert "window.__bd2CarouselEnter" in js, "bundle 缺换人转盘入场钩子（make patch）"
     r = subprocess.run(["node", "--check", str(ASSETS / "index-Dsqno3tX.js")],
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
 
     html = (ROOT / "index.html").read_text()
     assert "?v=DEV" not in html, "index.html 版本号未刷新（make patch）"
-    for name in ["bd2-data.js", "bd2-fav-random.js"]:
+    for name in ["bd2-data.js", "bd2-fav-random.js", "bd2-carousel.js"]:
         mm = re.search(re.escape(name) + r"\?v=([0-9a-f]{10})", html)
         assert mm, f"{name} 缺版本号"
         assert mm.group(1) == sha256(ASSETS / name)[:10], f"{name} 版本号与内容不一致"

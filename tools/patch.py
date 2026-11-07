@@ -243,6 +243,25 @@ PATCHES = [
         "else if(_l===`KR`||_l===`1`)bd2Voice(`KR`);continue}if(tb[n])",
         "WE 语音属性接线",
     ),
+    # 换人转盘：bundle 换人时先 dispose 旧 player、清空容器，旧画面留不下来。
+    # 在 watcher 最开头（旧 player 还在）和 Spine success（新骨架已就绪）各挂一个钩子，
+    # 交给 custom/bd2-carousel.js 做“定格快照反向转出 + 新人反向转入”。
+    # 钩子必须 try/catch：外挂异常不能拖垮换人本身。
+    (
+        "Oi(()=>h.selectedCharacterId,()=>{ze&&(fe=!0),Ze(),"
+        "h.animationCategory=`character`,An()})",
+        "Oi(()=>h.selectedCharacterId,()=>{"
+        "try{window.__bd2CarouselSwap&&window.__bd2CarouselSwap()}catch(e){}"
+        "ze&&(fe=!0),Ze(),h.animationCategory=`character`,An()})",
+        "换人转盘出场钩子",
+    ),
+    (
+        "success:e=>{let t=e.skeleton??null;",
+        "success:e=>{"
+        "try{window.__bd2CarouselEnter&&window.__bd2CarouselEnter()}catch(e){}"
+        "let t=e.skeleton??null;",
+        "换人转盘入场钩子",
+    ),
 ]
 
 def normalize(js):

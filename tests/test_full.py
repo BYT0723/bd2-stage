@@ -70,6 +70,8 @@ def test_bundle_patched():
     assert "shadowScale" in props and props["shadowScale"].get("type") == "slider", "shadowScale 属性缺失"
     assert props["shadowScale"].get("value") == 100, "阴影大小默认必须是 100"
     assert props["shadowScale"].get("min") == 0 and props["shadowScale"].get("max") == 200, "阴影大小范围必须是 0-200"
+    assert "window.__bd2CarouselSwap" in js, "换人转盘出场钩子未注入（make patch）"
+    assert "window.__bd2CarouselEnter" in js, "换人转盘入场钩子未注入（make patch）"
 
 def test_voice_panel():
     js = (ASSETS / "index-Dsqno3tX.js").read_text()

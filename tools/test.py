@@ -4,10 +4,16 @@ import sys, traceback
 import pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
+import tests.test_carousel as carousel
 import tests.test_fav_random as fav
 import tests.test_full as full
 
 CASES = [
+    carousel.test_script_contract,
+    carousel.test_bundle_hooks_present,
+    carousel.test_patch_points_declared,
+    carousel.test_index_and_stamp,
+    carousel.test_verify_gate,
     fav.test_characters_data,
     fav.test_npc_names_zh,
     fav.test_inject_script,

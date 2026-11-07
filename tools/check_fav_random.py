@@ -42,6 +42,16 @@ th = (ROOT / "custom" / "bd2-bg-theme.js").read_text()
 check("背景跟随系统配色", "prefers-color-scheme" in th)
 check("背景默认两张内置", "bd2-parchment" in th and "bd2-starlit-vault" in th)
 check("背景只碰localStorage", "localStorage" in th and "document." not in th)
+c = (ROOT / "custom" / "bd2-carousel.js").read_text()
+check("换人转盘定格快照", "__bd2CarouselSwap" in c and "drawImage" in c)
+check("换人转盘入场钩子", "__bd2CarouselEnter" in c and "requestAnimationFrame" in c)
+check("转盘方向随机且反向", "Math.random" in c and "var s = -state.dir" in c and "var s = state.dir" in c)
+check("转盘尊重减少动效", "prefers-reduced-motion" in c and "reduced()" in c)
+check("转盘有加载兜底", "setTimeout" in c and "clearTimeout" in c and "HOLD_MS" in c)
+check("转盘无远程请求", "http://" not in c and "https://" not in c and "fetch(" not in c)
+check("转盘清理快照", "removeOverlay" in c and "state.overlay = null" in c)
+bl = (LIVE / "assets" / "index-Dsqno3tX.js").read_text()
+check("bundle换人钩子", "window.__bd2CarouselSwap" in bl and "window.__bd2CarouselEnter" in bl)
 check("随机不重复(洗牌袋)", "nextPick" in s and "bagKey" in s)
 check("定时随机", "timerFire" in s and "startTimer" in s)
 check("定时按面板可见性暂停", "getClientRects" in s and "panelVisible" in s)
@@ -71,7 +81,7 @@ check("模板挂载", "bd2-fav-random.js?v=DEV" in html and "bd2-data.js?v=DEV" 
 
 live_html = (LIVE / "index.html").read_text()
 check("线上版本号已哈希化", "?v=DEV" not in live_html)
-for name in ["bd2-data.js", "bd2-fav-random.js"]:
+for name in ["bd2-data.js", "bd2-fav-random.js", "bd2-carousel.js"]:
     mm = re.search(re.escape(name) + r"\?v=([0-9a-f]{10})", live_html)
     f = LIVE / "assets" / name
     good = bool(mm) and f.exists() and \

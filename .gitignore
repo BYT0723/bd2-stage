@@ -12,6 +12,7 @@ assets/index-*.css
 assets/bd2-data.js
 assets/bd2-bg-theme.js
 assets/bd2-fav-random.js
+assets/bd2-carousel.js
 
 # Steam 原始资源
 preview.gif
