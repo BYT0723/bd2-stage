@@ -166,17 +166,19 @@
   }
   function curLang() {
     // 角色名语言组恒为 3 段（中/日/英）；语音补丁新增的 2 段 JP/KR 组必须排除，
-    // 否则全局索引错位（语音 KR→误判 UI 日语）。按 3 段认组，兼容无标记的老 bundle。
+    // 帧率面板新增的 2×3 段组也必须排除，否则全局索引错位
+    // （语音 KR→误判 UI 日语；帧率 60/跟随→误判语言）。按 3 段认组，兼容无标记的老 bundle。
     var groups = document.querySelectorAll('.wc-seg');
     var btns = null;
     for (var g = 0; g < groups.length; g++) {
       var box = groups[g];
       if (box.classList.contains('bd2-voice-seg')) continue;
+      if (box.classList.contains('bd2-fps-seg')) continue;
       if (box.getAttribute('aria-label') === 'voice language') continue;
       var b = box.querySelectorAll('.wc-seg__btn');
       if (b.length === 3) { btns = b; break; }
     }
-    if (!btns) btns = document.querySelectorAll('.wc-seg:not(.bd2-voice-seg) .wc-seg__btn');
+    if (!btns) btns = document.querySelectorAll('.wc-seg:not(.bd2-voice-seg):not(.bd2-fps-seg) .wc-seg__btn');
     btns = Array.prototype.slice.call(btns);
     var i = btns.findIndex(function (b) { return b.classList.contains('wc-seg__btn--active'); });
     return LANGS[i] || 'zh';

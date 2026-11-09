@@ -6,6 +6,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 import tests.test_carousel as carousel
 import tests.test_fav_random as fav
+import tests.test_fps_mode as fps
 import tests.test_full as full
 
 CASES = [
@@ -21,6 +22,10 @@ CASES = [
     fav.test_versions_stamped,
     fav.test_bg_theme_script,
     fav.test_dist_matches_live,
+    fps.test_properties_shape,
+    fps.test_scheduler_contract,
+    fps.test_panel_rows,
+    fps.test_integration,
     full.test_manifest_complete,
     full.test_bundle_patched,
     full.test_voice_panel,

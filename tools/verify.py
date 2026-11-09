@@ -49,7 +49,7 @@ def main():
 
     html = (ROOT / "index.html").read_text()
     assert "?v=DEV" not in html, "index.html 版本号未刷新（make patch）"
-    for name in ["bd2-data.js", "bd2-fav-random.js", "bd2-carousel.js"]:
+    for name in ["bd2-data.js", "bd2-fav-random.js", "bd2-carousel.js", "bd2-fps.js"]:
         mm = re.search(re.escape(name) + r"\?v=([0-9a-f]{10})", html)
         assert mm, f"{name} 缺版本号"
         assert mm.group(1) == sha256(ASSETS / name)[:10], f"{name} 版本号与内容不一致"

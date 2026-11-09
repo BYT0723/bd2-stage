@@ -81,7 +81,8 @@ def test_logo_removed():
 def test_versions_stamped():
     html = (LIVE / "index.html").read_text()
     assert "?v=DEV" not in html, "线上版本号未被 deploy.py 替换"
-    for name in ["bd2-data.js", "bd2-bg-theme.js", "bd2-fav-random.js", "bd2-carousel.js"]:
+    for name in ["bd2-data.js", "bd2-bg-theme.js", "bd2-fav-random.js",
+                 "bd2-carousel.js", "bd2-fps.js"]:
         m = re.search(re.escape(name) + r"\?v=([0-9a-f]{10})", html)
         assert m, f"{name} 缺内容哈希版本号"
         import hashlib

@@ -162,6 +162,48 @@
 				"text": "阴影大小 % (Shadow size)",
 				"type": "slider",
 				"value": 100
+			},
+			"fps": {
+				"index": 20,
+				"options": [
+					{
+						"label": "30 fps",
+						"value": "30"
+					},
+					{
+						"label": "60 fps",
+						"value": "60"
+					},
+					{
+						"label": "跟随显示器 (Refresh)",
+						"value": "refresh"
+					}
+				],
+				"order": 120,
+				"text": "活动帧率 (FPS)",
+				"type": "combo",
+				"value": "refresh"
+			},
+			"fpsIdle": {
+				"index": 21,
+				"options": [
+					{
+						"label": "30 fps",
+						"value": "30"
+					},
+					{
+						"label": "60 fps",
+						"value": "60"
+					},
+					{
+						"label": "跟随显示器 (Refresh)",
+						"value": "refresh"
+					}
+				],
+				"order": 121,
+				"text": "静止帧率 (Idle FPS)",
+				"type": "combo",
+				"value": "refresh"
 			}
 		}
 	},

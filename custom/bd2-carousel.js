@@ -192,6 +192,10 @@
 
   /* 换人 watcher 最开头调用：此时旧 player 还活着，可以同步取画面 */
   function swap() {
+    // 换人（含定时轮播，没有输入事件）时先提到活动帧率，转盘/入场才顺滑
+    if (window.__bd2FpsBoost) {
+      try { window.__bd2FpsBoost(); } catch (e) {}
+    }
     reset();
     state.wrapper = wrapper();
     if (!state.wrapper) return;
