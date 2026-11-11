@@ -262,6 +262,29 @@ PATCHES = [
         "let t=e.skeleton??null;",
         "换人转盘入场钩子",
     ),
+    # 换人时旧 player 的 WebGL context 不释放：bundle 的 dispose() 只清
+    # renderer/loadingScreen/assetManager，然后直接把 DOM 摘掉，从不销毁 context。
+    # 实测（780M 核显，nvtop gpu_mem_bytes_alloc）：每个 SpinePlayer 新建的
+    # 2560x1440 context（preserveDrawingBuffer + 默认 MSAA）稳定占 4 个
+    # dmabuf ≈ 60MB，且 WEBGL_lose_context.loseContext() + canvas 缩 0 都
+    # 不会让 WebKit 立刻归还——要等 context 对象被 GC 销毁，实际只有整页销毁
+    # 才会收回。启动阶段 bundle 自己就重建 6 次（+360MB），叠加 5 分钟定时
+    # 轮播，一晚 190 次换人即 3.5GB+。
+    # 所以不要每次换人都建新 context：把 canvas 缓存在 window 上，新的
+    # SpinePlayer 复用同一个 canvas（getContext 拿回同一个 context），
+    # 旧 player 的 dispose 在活着的 context 上才能真正 deleteTexture 归还显存。
+    (
+        "this.canvas=Sp(t,`spine-player-canvas`),"
+        "this.context=new kf(this.canvas,{alpha:e.alpha,"
+        "preserveDrawingBuffer:e.preserveDrawingBuffer})",
+        "this.canvas=(function(_c){try{var _g=window.__bd2SpineCanvas;"
+        "if(_g&&_g!==_c){_c.parentNode&&_c.parentNode.replaceChild(_g,_c);return _g}"
+        "if(!_g)window.__bd2SpineCanvas=_c;return _c}catch(_e){return _c}})"
+        "(Sp(t,`spine-player-canvas`)),"
+        "this.context=new kf(this.canvas,{alpha:e.alpha,"
+        "preserveDrawingBuffer:e.preserveDrawingBuffer})",
+        "复用 WebGL context",
+    ),
 ]
 
 def normalize(js):

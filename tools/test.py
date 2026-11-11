@@ -31,6 +31,7 @@ CASES = [
     full.test_voice_panel,
     full.test_voice_property,
     full.test_audio_patch_fingerprint,
+    full.test_webgl_context_reuse,
 ]
 
 def main():

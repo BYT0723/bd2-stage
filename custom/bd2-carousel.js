@@ -73,8 +73,17 @@
     try { a.cancel(); } catch (e) {}
   }
 
+  function releaseSnapshot() {
+    /* 快照是整屏 2D canvas（2560x1440x4 ≈ 15MB）。摘 DOM 不会立刻还缓冲区，
+     * 要等 GC；每次换人都留一张，长会话里就是稳定漏。先缩到 0 立刻释放。 */
+    var c = state.overlay && state.overlay.querySelector('canvas');
+    if (!c) return;
+    try { c.width = 0; c.height = 0; } catch (e) {}
+  }
+
   function removeOverlay() {
     if (!state.overlay) return;
+    releaseSnapshot();
     try { state.overlay.remove(); } catch (e) {}
     state.overlay = null;
   }

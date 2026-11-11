@@ -105,3 +105,17 @@ def test_audio_patch_fingerprint():
     ref = (ROOT / "tasks" / "bundle-reference.js.txt").read_text()
     assert "t.preload=`auto`" in ref, "原始 bundle 指纹变化，需复核语音补丁点"
     assert "function Vn(){let e=Ln()" in ref, "原始 Vn 指纹变化，需复核语音补丁点"
+
+def test_webgl_context_reuse():
+    """换人必须复用同一个 canvas/context：每次新建 context 会永久占 4 个 dmabuf
+    （实测 loseContext + canvas 缩 0 都不归还，只有整页销毁才收回）。"""
+    js = (ASSETS / "index-Dsqno3tX.js").read_text()
+    assert "window.__bd2SpineCanvas" in js, "SpinePlayer 未复用 canvas（make patch）"
+    assert js.count("window.__bd2SpineCanvas") == 2, "缓存读写应各一处"
+    assert "_c.parentNode.replaceChild(_g,_c)" in js, "复用时必须把缓存 canvas 换进新容器"
+    assert "WEBGL_lose_context" not in js, "loseContext 实测不归还（WebKit），不要再用"
+    car = (ASSETS / "bd2-carousel.js").read_text()
+    assert "releaseSnapshot" in car, "转盘快照画布未释放（每次换人一张整屏 canvas）"
+    assert "c.width = 0" in car and "c.height = 0" in car, "快照画布必须缩到 0 才立刻还缓冲"
+    p = (ROOT / "tools" / "patch.py").read_text()
+    assert "__bd2SpineCanvas" in p, "patch.py 未登记 context 复用补丁"

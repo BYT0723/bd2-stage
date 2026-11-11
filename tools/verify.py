@@ -43,6 +43,7 @@ def main():
     assert "t.onerror=()=>" in js, "bundle 复用语音元素时监听器会叠加（make patch）"
     assert "window.__bd2CarouselSwap" in js, "bundle 缺换人转盘出场钩子（make patch）"
     assert "window.__bd2CarouselEnter" in js, "bundle 缺换人转盘入场钩子（make patch）"
+    assert "window.__bd2SpineCanvas" in js, "bundle 换人时未复用 WebGL context（make patch）"
     r = subprocess.run(["node", "--check", str(ASSETS / "index-Dsqno3tX.js")],
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
