@@ -32,6 +32,7 @@ CASES = [
     full.test_voice_property,
     full.test_audio_patch_fingerprint,
     full.test_webgl_context_reuse,
+    full.test_memory_patches,
 ]
 
 def main():

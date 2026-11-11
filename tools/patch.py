@@ -285,6 +285,34 @@ PATCHES = [
         "preserveDrawingBuffer:e.preserveDrawingBuffer})",
         "复用 WebGL context",
     ),
+    # 2D Spine 渲染不需要深度缓冲（bundle 里没有任何 DEPTH_TEST / depthFunc，
+    # clear 里的 DEPTH_BUFFER_BIT 对无深度附件的帧缓冲是空操作），也不需要 MSAA：
+    # 人物剪影是贴图 alpha 边缘，不是几何多边形边缘，4x MSAA 只给三角形边界
+    # 做平滑，对最终画面几乎无可见差异（截图 2x 对比确认），却要为 2560x1297
+    # 的默认帧缓冲额外分配 4x 颜色 + 4x 深度。实测（780M 核显，GTT）：
+    # 关掉 antialias 省 ~77MB，关掉 depth 再省 ~44MB，合计 ~120MB。
+    (
+        "this.context=new kf(this.canvas,{alpha:e.alpha,"
+        "preserveDrawingBuffer:e.preserveDrawingBuffer})",
+        "this.context=new kf(this.canvas,{alpha:e.alpha,"
+        "preserveDrawingBuffer:e.preserveDrawingBuffer,"
+        "antialias:!1,depth:!1})",
+        "关闭无用 MSAA/深度缓冲",
+    ),
+    # 图层高亮用的 2D overlay canvas 在壁纸模式下完全是摆设：er() 每帧都会
+    # 把整屏画布按窗口尺寸 resize 一次（2560x1297 RGBA ≈ 13MB）并 clearRect。
+    # 没有 selectedLayerName 时它 clear 完立刻 return，既占显存/内存又白扫
+    # 一遍全屏像素（60fps 下约 800MB/s 带宽），还多一层合成图层。
+    # 把“有没有选中图层”提到最前面：没选中就把画布缩到 0（立刻还缓冲区），
+    # 选中时才恢复原来的 resize + clear + 描边流程。
+    (
+        "function er(){let e=l.value;if(!e||!i.value||!z)return;",
+        "function er(){var _r=h.selectedLayerName;"
+        "if(!_r||!h.layerSelectionEnabled){var _c=l.value;"
+        "if(_c&&(_c.width||_c.height)){_c.width=0;_c.height=0}return}"
+        "let e=l.value;if(!e||!i.value||!z)return;",
+        "图层高亮画布按需创建",
+    ),
 ]
 
 def normalize(js):

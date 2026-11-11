@@ -119,3 +119,18 @@ def test_webgl_context_reuse():
     assert "c.width = 0" in car and "c.height = 0" in car, "快照画布必须缩到 0 才立刻还缓冲"
     p = (ROOT / "tools" / "patch.py").read_text()
     assert "__bd2SpineCanvas" in p, "patch.py 未登记 context 复用补丁"
+
+def test_memory_patches():
+    """显存/内存瘦身：2D 渲染用不到 MSAA 和深度缓冲，图层高亮画布在壁纸模式
+    下也每帧白清一整屏。实测（780M 核显）合计省 ~160MB GTT。"""
+    js = (ASSETS / "index-Dsqno3tX.js").read_text()
+    assert "antialias:!1,depth:!1" in js, "WebGL 没关掉无用的 MSAA/深度缓冲（make patch）"
+    assert "function er(){var _r=h.selectedLayerName;" in js, "图层高亮画布未按需创建（make patch）"
+    assert "_c.width=0;_c.height=0" in js, "未选中图层时必须把 overlay 画布缩到 0 还缓冲"
+    # 守卫必须在 resize/clearRect 之前，否则每帧仍会清一整屏
+    guard = js.index("function er(){var _r=h.selectedLayerName;")
+    resize = js.index("e.width!==t.width", guard)
+    assert guard < resize, "overlay 守卫必须在 resize/clear 之前"
+    p = (ROOT / "tools" / "patch.py").read_text()
+    assert "关闭无用 MSAA/深度缓冲" in p, "patch.py 未登记 MSAA/深度缓冲补丁"
+    assert "图层高亮画布按需创建" in p, "patch.py 未登记 overlay 画布补丁"
