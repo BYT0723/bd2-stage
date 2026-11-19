@@ -33,6 +33,7 @@ CASES = [
     full.test_audio_patch_fingerprint,
     full.test_webgl_context_reuse,
     full.test_memory_patches,
+    full.test_camera_resize_fix,
 ]
 
 def main():

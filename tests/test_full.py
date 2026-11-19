@@ -134,3 +134,16 @@ def test_memory_patches():
     p = (ROOT / "tools" / "patch.py").read_text()
     assert "关闭无用 MSAA/深度缓冲" in p, "patch.py 未登记 MSAA/深度缓冲补丁"
     assert "图层高亮画布按需创建" in p, "patch.py 未登记 overlay 画布补丁"
+
+def test_camera_resize_fix():
+    """xwallpaper 首次设壁纸人物很小、刷新才好：webkit 窗口先小后大，
+    success 按小画布算出 _e 后 resize 不重算，人物按 vh0/vh1 缩小。
+    lr() 必须每次按当前画布重算 _e 并同步 viewport，resize 必须调 lr()。"""
+    js = (ASSETS / "index-Dsqno3tX.js").read_text()
+    assert "_rs=Number(h.roleScale)" in js, "lr() 未 guard roleScale（make patch）"
+    assert "he.viewportWidth=_sc.viewportWidth" in js, "lr() 未同步最新 viewport（make patch）"
+    assert "_e=_a>_v?_p/_gw:_m/_gh" in js, "lr() 未按当前画布重算 _e（make patch）"
+    assert "window.addEventListener(`resize`,()=>{try{lr()}" in js, "resize 没调 lr()（make patch）"
+    p = (ROOT / "tools" / "patch.py").read_text()
+    assert "相机基准跟随窗口重算" in p, "patch.py 未登记相机重算补丁"
+    assert "窗口变化时重算相机" in p, "patch.py 未登记 resize 调 lr 补丁"

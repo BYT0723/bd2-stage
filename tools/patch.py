@@ -299,6 +299,31 @@ PATCHES = [
         "antialias:!1,depth:!1})",
         "关闭无用 MSAA/深度缓冲",
     ),
+    # xwallpaper 首次设壁纸人物很小、刷新才好：webkit 窗口先小后大，
+    # Spine success 时按小画布算出 _e/viewport，之后 resize 只调了 hit 层，
+    # 相机基准一直是旧的，人物就按 vh0/vh1 缩小了。每次 lr() 都按当前
+    # 画布 + 角色包围盒重算 _e，并把 he.viewport 同步到最新；resize 时也调 lr()。
+    (
+        "function lr(){if(!he||!z?.canvas)return;let e=z.canvas;he.zoom=_e/h.roleScale,he.update();",
+        "function lr(){if(!he||!z?.canvas)return;"
+        "try{var _sc=z.sceneRenderer&&z.sceneRenderer.camera;"
+        "if(_sc&&_sc.viewportWidth>0&&_sc.viewportHeight>0)"
+        "{he.viewportWidth=_sc.viewportWidth;he.viewportHeight=_sc.viewportHeight}"
+        "var _p=Math.max(Oe.x,1),_m=Math.max(Oe.y+100,1),"
+        "_g=z.canvas,_gw=_g.width||1,_gh=_g.height||1;"
+        "if(_gw>0&&_gh>0){var _a=_gh/_gw,_v=_m/_p;_e=_a>_v?_p/_gw:_m/_gh}}"
+        "catch(_lrE){}"
+        "var _rs=Number(h.roleScale);"
+        "if(!Number.isFinite(_rs)||_rs<=0)_rs=1;"
+        "let e=z.canvas;he.zoom=_e/_rs,he.update();",
+        "相机基准跟随窗口重算",
+    ),
+    (
+        "window.addEventListener(`resize`,fr),document.addEventListener(`visibilitychange`,Un)",
+        "window.addEventListener(`resize`,()=>{try{lr()}catch(_lrE){}fr()}),"
+        "document.addEventListener(`visibilitychange`,Un)",
+        "窗口变化时重算相机",
+    ),
     # 图层高亮用的 2D overlay canvas 在壁纸模式下完全是摆设：er() 每帧都会
     # 把整屏画布按窗口尺寸 resize 一次（2560x1297 RGBA ≈ 13MB）并 clearRect。
     # 没有 selectedLayerName 时它 clear 完立刻 return，既占显存/内存又白扫
@@ -347,6 +372,10 @@ def normalize(js):
         (
             "h.shadowOffsetX,h.shadowOffsetY,h.foregroundOpacity",
             "h.shadowOffsetX,h.shadowOffsetY,h.shadowScale,h.foregroundOpacity",
+        ),
+        (
+            "window.addEventListener(`resize`,()=>{try{lr()}catch(_e){}fr()}),",
+            "window.addEventListener(`resize`,()=>{try{lr()}catch(_lrE){}fr()}),",
         ),
     ]
     for legacy, current in migrations:
